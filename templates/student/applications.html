@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Job & Internship Applications - CareerAI{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/student.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 1000px;">
+  <div style="margin-bottom: 2rem;">
+    <h1 style="font-size: 2rem;">My Applications</h1>
+    <p>Track your recruitment progress across submitted jobs and internships.</p>
+  </div>
+
+  <div class="card">
+    <div class="pipeline-table-container">
+      <table class="pipeline-table">
+        <thead>
+          <tr>
+            <th>Position & Organization</th>
+            <th>Type</th>
+            <th>Date Applied</th>
+            <th>AI Match</th>
+            <th>Recruitment Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for app in applications %}
+            <tr>
+              <td>
+                <h4 style="font-size: 1rem; margin-bottom: 0.15rem;">
+                  <a href="{% url 'job_detail' app.job.id %}">{{ app.job.title }}</a>
+                </h4>
+                <span style="font-size: 0.85rem; color: var(--primary); font-weight: 600;">
+                  <i class="fa-solid fa-building"></i> {{ app.job.company.name }} &bull; {{ app.job.location|default:"Remote" }}
+                </span>
+                {% if app.recruiter_notes %}
+                  <div style="font-size: 0.8rem; color: var(--text-muted); background: var(--surface-alt); padding: 0.35rem 0.5rem; border-radius: var(--radius-sm); margin-top: 0.4rem;">
+                    <strong>Recruiter Note:</strong> {{ app.recruiter_notes }}
+                  </div>
+                {% endif %}
+              </td>
+              <td>
+                <span class="badge {% if app.job.is_internship %}badge-warning{% else %}badge-info{% endif %}">
+                  {{ app.job.get_job_type_display }}
+                </span>
+              </td>
+              <td>{{ app.applied_at|date:"M d, Y" }}</td>
+              <td>
+                <div class="match-gauge {% if app.overall_match_score >= 80 %}match-high{% elif app.overall_match_score >= 50 %}match-medium{% else %}match-low{% endif %}">
+                  <i class="fa-solid fa-brain"></i> {{ app.overall_match_score }}%
+                </div>
+              </td>
+              <td>
+                <span class="badge {% if app.status == 'shortlisted' or app.status == 'accepted' %}badge-success{% elif app.status == 'reviewing' or app.status == 'interview' %}badge-warning{% elif app.status == 'rejected' %}badge-danger{% else %}badge-primary{% endif %}" style="font-size: 0.85rem;">
+                  {{ app.get_status_display }}
+                </span>
+              </td>
+              <td>
+                <div style="display: flex; gap: 0.5rem;">
+                  <a href="{% url 'job_detail' app.job.id %}" class="btn btn-secondary btn-sm" title="View Job">
+                    <i class="fa-solid fa-eye"></i>
+                  </a>
+                  <a href="{% url 'withdraw_application' app.id %}" class="btn btn-danger btn-sm" title="Withdraw Application" onclick="return confirm('Are you sure you want to withdraw this application?');">
+                    <i class="fa-solid fa-trash-can"></i>
+                  </a>
+                </div>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                <i class="fa-solid fa-paper-plane" style="font-size: 2.5rem; color: var(--text-sub); margin-bottom: 1rem; display: block;"></i>
+                You haven't applied to any roles yet. Explore jobs and submit your first application!
+                <div style="margin-top: 1rem;">
+                  <a href="{% url 'job_list' %}" class="btn btn-primary btn-sm">Explore Openings</a>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

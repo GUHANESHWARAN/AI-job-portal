@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Manage Positions - CareerAI{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/recruiter.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <h1 style="font-size: 2rem;">Manage Job & Internship Postings</h1>
+      <p>View all postings, track application volume, and toggle active status.</p>
+    </div>
+    <a href="{% url 'recruiter_create_job' %}" class="btn btn-primary">
+      <i class="fa-solid fa-plus-circle"></i> Create New Posting
+    </a>
+  </div>
+
+  <div class="card">
+    <div class="pipeline-table-container">
+      <table class="pipeline-table">
+        <thead>
+          <tr>
+            <th>Position Title</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Total Applicants</th>
+            <th>Posted Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for job in jobs %}
+            <tr>
+              <td>
+                <h4 style="font-size: 1rem; margin-bottom: 0.15rem;">
+                  <a href="{% url 'job_detail' job.id %}">{{ job.title }}</a>
+                </h4>
+                <span style="font-size: 0.82rem; color: var(--text-muted);">
+                  <i class="fa-solid fa-location-dot"></i> {{ job.location|default:"Remote" }} &bull; {{ job.get_work_mode_display }}
+                </span>
+              </td>
+              <td>
+                <span class="badge {% if job.is_internship %}badge-warning{% else %}badge-info{% endif %}">
+                  {{ job.get_job_type_display }}
+                </span>
+              </td>
+              <td>
+                <span class="badge {% if job.status == 'active' %}badge-success{% else %}badge-danger{% endif %}">
+                  {{ job.get_status_display }}
+                </span>
+              </td>
+              <td>
+                <a href="{% url 'recruiter_applications' %}?job_id={{ job.id }}" style="font-weight: 700; color: var(--primary);">
+                  {{ job.applications.count }} Candidates
+                </a>
+              </td>
+              <td>{{ job.created_at|date:"M d, Y" }}</td>
+              <td>
+                <div style="display: flex; gap: 0.5rem;">
+                  <a href="{% url 'recruiter_applications' %}?job_id={{ job.id }}" class="btn btn-primary btn-sm" title="View Applicants">
+                    <i class="fa-solid fa-users-viewfinder"></i> Applicants
+                  </a>
+                  <a href="{% url 'recruiter_edit_job' job.id %}" class="btn btn-secondary btn-sm" title="Edit">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                  </a>
+                  <a href="?toggle={{ job.id }}" class="btn btn-secondary btn-sm" title="{% if job.status == 'active' %}Close Posting{% else %}Reopen Posting{% endif %}">
+                    {% if job.status == 'active' %}<i class="fa-solid fa-pause"></i>{% else %}<i class="fa-solid fa-play"></i>{% endif %}
+                  </a>
+                </div>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                You haven't posted any jobs yet. Click "Create New Posting" to publish your first opportunity!
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

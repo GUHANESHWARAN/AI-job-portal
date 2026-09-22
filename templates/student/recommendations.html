@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}AI Job Recommendations - CareerAI{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/student.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 1000px;">
+  <div style="margin-bottom: 2rem;">
+    <div style="display: inline-flex; align-items: center; gap: 0.4rem; background: var(--primary-light); color: var(--primary); padding: 0.3rem 0.8rem; border-radius: var(--radius-full); font-size: 0.82rem; font-weight: 700; margin-bottom: 0.75rem;">
+      <i class="fa-solid fa-wand-magic-sparkles"></i> Personalized Intelligence Feed
+    </div>
+    <h1 style="font-size: 2rem;">Curated Opportunities for You</h1>
+    <p>Ranked in real-time by multi-dimensional similarity between your parsed resume and current job specifications.</p>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+    {% for item in recommendations %}
+      <div class="card" style="border-left: 6px solid {% if item.match.overall_score >= 80 %}#10b981{% elif item.match.overall_score >= 65 %}var(--primary){% elif item.match.overall_score >= 50 %}#f59e0b{% else %}#ef4444{% endif %};">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <span class="badge {% if item.job.is_internship %}badge-warning{% else %}badge-info{% endif %}" style="margin-bottom: 0.4rem;">
+              {{ item.job.get_job_type_display }}
+            </span>
+            <h2 style="font-size: 1.35rem; margin-bottom: 0.25rem;">
+              <a href="{% url 'job_detail' item.job.id %}">{{ item.job.title }}</a>
+            </h2>
+            <p style="font-weight: 600; color: var(--primary);">
+              <i class="fa-solid fa-building"></i> {{ item.job.company.name }} &bull; {{ item.job.location|default:"Remote" }}
+            </p>
+          </div>
+
+          <div style="text-align: right;">
+            <div class="match-gauge {% if item.match.overall_score >= 80 %}match-high{% elif item.match.overall_score >= 50 %}match-medium{% else %}match-low{% endif %}" style="font-size: 1.1rem; padding: 0.5rem 1rem;">
+              <i class="fa-solid fa-brain"></i> {{ item.match.overall_score }}% Match
+            </div>
+            <span style="display: block; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-top: 0.35rem;">
+              {{ item.match.verdict }}
+            </span>
+          </div>
+        </div>
+
+        <!-- AI Summary Explanation -->
+        <div style="background: var(--surface-alt); padding: 0.85rem 1rem; border-radius: var(--radius-md); margin: 1.25rem 0 1rem; font-size: 0.9rem;">
+          <i class="fa-solid fa-quote-left" style="color: var(--primary); margin-right: 0.35rem;"></i>
+          <strong>AI Insight:</strong> {{ item.match.summary_explanation }}
+        </div>
+
+        <!-- Skill Comparison Row -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+          <div>
+            <span style="font-size: 0.8rem; font-weight: 700; color: #065f46; display: block; margin-bottom: 0.3rem;">
+              <i class="fa-solid fa-check"></i> Matched Skills:
+            </span>
+            <div>
+              {% for s in item.match.matched_skills|slice:":6" %}
+                <span class="tag-chip tag-matched">{{ s }}</span>
+              {% empty %}
+                <span style="font-size: 0.8rem; color: var(--text-sub);">Foundational match</span>
+              {% endfor %}
+            </div>
+          </div>
+          <div>
+            <span style="font-size: 0.8rem; font-weight: 700; color: #991b1b; display: block; margin-bottom: 0.3rem;">
+              <i class="fa-solid fa-xmark"></i> Skills to Upskill:
+            </span>
+            <div>
+              {% for s in item.match.missing_required|slice:":4" %}
+                <span class="tag-chip tag-missing">{{ s }}</span>
+              {% empty %}
+                <span style="font-size: 0.8rem; color: var(--success);">No critical skill gaps!</span>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Footer -->
+        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 0.85rem;">
+          <a href="{% url 'student_skill_gap' %}?mode=job&target={{ item.job.id }}" class="btn btn-secondary btn-sm">
+            <i class="fa-solid fa-route"></i> Roadmap to 100% Fit
+          </a>
+          <a href="{% url 'job_detail' item.job.id %}" class="btn btn-primary">
+            Review Position & Apply <i class="fa-solid fa-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+    {% empty %}
+      <div class="card" style="text-align: center; padding: 3rem;">
+        <i class="fa-solid fa-wand-magic-sparkles" style="font-size: 3rem; color: var(--text-sub); margin-bottom: 1rem;"></i>
+        <h3>No Specific Recommendations Yet</h3>
+        <p style="margin-bottom: 1.5rem;">Upload or update your resume to generate high-affinity matches.</p>
+        <a href="{% url 'student_resume' %}" class="btn btn-primary">Upload Resume Document</a>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

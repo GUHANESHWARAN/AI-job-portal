@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Apply for {{ job.title }} - CareerAI{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 760px;">
+  <div style="margin-bottom: 1.5rem;">
+    <a href="{% url 'job_detail' job.id %}" class="btn btn-secondary btn-sm"><i class="fa-solid fa-arrow-left"></i> Cancel</a>
+  </div>
+
+  <div class="card">
+    <div style="border-bottom: 1px solid var(--border); padding-bottom: 1.25rem; margin-bottom: 1.5rem;">
+      <span class="badge badge-primary" style="margin-bottom: 0.5rem;">Job Application</span>
+      <h1 style="font-size: 1.75rem;">Applying for {{ job.title }}</h1>
+      <p style="font-size: 1rem; color: var(--text-muted); font-weight: 500;">
+        <i class="fa-solid fa-building"></i> {{ job.company.name }} &bull; {{ job.location|default:"Remote" }}
+      </p>
+    </div>
+
+    <!-- AI Compatibility Preview -->
+    <div style="background: #faf5ff; border: 1px solid #e9d5ff; border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between;">
+      <div>
+        <span style="font-size: 0.85rem; font-weight: 700; color: #7e22ce; display: block;">Your Projected AI Compatibility</span>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;">Calculated snapshot based on your profile & uploaded resume.</p>
+      </div>
+      <div class="match-gauge {% if match_info.overall_score >= 80 %}match-high{% elif match_info.overall_score >= 50 %}match-medium{% else %}match-low{% endif %}">
+        <i class="fa-solid fa-brain"></i> {{ match_info.overall_score }}% Match
+      </div>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      <!-- Resume Selection -->
+      <div class="form-group" style="margin-bottom: 1.5rem;">
+        <label class="form-label">Resume to Submit *</label>
+        {% if profile.resume_file %}
+          <div style="display: flex; align-items: center; gap: 0.75rem; background: var(--surface-alt); padding: 0.85rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: 0.75rem;">
+            <i class="fa-solid fa-file-pdf" style="font-size: 1.5rem; color: var(--primary);"></i>
+            <div style="flex: 1;">
+              <strong style="font-size: 0.92rem; display: block;">Default Profile Resume</strong>
+              <span style="font-size: 0.8rem; color: var(--text-muted);">{{ profile.resume_file.name }}</span>
+            </div>
+            <span class="badge badge-success">ATS Score: {{ profile.ats_score }}</span>
+          </div>
+        {% else %}
+          <div class="alert alert-warning" style="margin-bottom: 0.75rem;">
+            You haven't uploaded a default resume to your profile yet. Please attach one below.
+          </div>
+        {% endif %}
+
+        <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 0.35rem;">
+          Or attach a tailored resume specifically for this position (optional):
+        </label>
+        <input type="file" name="resume_file" class="form-input" accept=".pdf,.docx,.txt">
+      </div>
+
+      <!-- Cover Letter -->
+      <div class="form-group" style="margin-bottom: 2rem;">
+        <label class="form-label">Cover Note / Introduction (Optional)</label>
+        <textarea name="cover_letter" class="form-textarea" rows="4" placeholder="Briefly explain why you're a great fit for this position..."></textarea>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+        <a href="{% url 'job_detail' job.id %}" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary btn-lg">
+          <i class="fa-solid fa-paper-plane"></i> Submit Application
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}CareerAI - AI-Powered Job & Internship Intelligence Platform{% endblock %}
+
+{% block content %}
+<div class="container">
+  
+  <!-- Hero Section -->
+  <section style="text-align: center; padding: 3rem 0 4rem; max-width: 860px; margin: 0 auto;">
+    <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: var(--primary-light); color: var(--primary); padding: 0.4rem 1rem; border-radius: var(--radius-full); font-size: 0.88rem; font-weight: 700; margin-bottom: 1.5rem;">
+      <i class="fa-solid fa-sparkles"></i> Next-Gen AI Career Matching
+    </div>
+    <h1 style="font-size: 3rem; font-weight: 900; letter-spacing: -0.02em; margin-bottom: 1.25rem; line-height: 1.15;">
+      Precision Career Matching Powered by <span style="background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Machine Learning</span>
+    </h1>
+    <p style="font-size: 1.2rem; color: var(--text-muted); margin-bottom: 2.5rem; line-height: 1.6;">
+      Go beyond generic job boards. Parse resumes instantly with PyMuPDF, analyze ATS compatibility, bridge skill gaps with customized learning roadmaps, and match candidates with explainable AI.
+    </p>
+
+    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+      <a href="{% url 'register' %}?role=student" class="btn btn-primary btn-lg">
+        <i class="fa-solid fa-user-graduate"></i> Join as Student / Job Seeker
+      </a>
+      <a href="{% url 'register' %}?role=recruiter" class="btn btn-secondary btn-lg">
+        <i class="fa-solid fa-building-user"></i> Post Jobs as Recruiter
+      </a>
+    </div>
+  </section>
+
+  <!-- Live Platform Stats -->
+  <div class="stats-grid" style="margin-bottom: 4rem;">
+    <div class="stat-card">
+      <div class="stat-icon stat-icon-primary"><i class="fa-solid fa-briefcase"></i></div>
+      <div class="stat-info">
+        <h4>{{ total_jobs|default:"12" }}</h4>
+        <p>Active Full-time Roles</p>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon stat-icon-success"><i class="fa-solid fa-graduation-cap"></i></div>
+      <div class="stat-info">
+        <h4>{{ total_internships|default:"8" }}</h4>
+        <p>Internship Positions</p>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon stat-icon-warning"><i class="fa-solid fa-building"></i></div>
+      <div class="stat-info">
+        <h4>{{ total_companies|default:"15" }}</h4>
+        <p>Hiring Companies</p>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon stat-icon-info"><i class="fa-solid fa-brain"></i></div>
+      <div class="stat-info">
+        <h4>1,200+</h4>
+        <p>Skills in AI Taxonomy</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Core AI Features -->
+  <section style="margin-bottom: 4rem;">
+    <div style="text-align: center; margin-bottom: 2.5rem;">
+      <h2 style="font-size: 2rem; margin-bottom: 0.5rem;">Why CareerAI is Different</h2>
+      <p>Built as a research-grade intelligence engine, eliminating the black box of recruitment.</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+      <div class="card" style="border-top: 4px solid var(--primary);">
+        <div style="font-size: 1.8rem; color: var(--primary); margin-bottom: 1rem;"><i class="fa-solid fa-file-shield"></i></div>
+        <h3 style="margin-bottom: 0.5rem;">Resume ATS Scorer</h3>
+        <p>Upload PDF/DOCX resumes. Analyzes section structure, contact details, action verbs, keyword density, and outputs an actionable ATS score.</p>
+      </div>
+
+      <div class="card" style="border-top: 4px solid var(--secondary);">
+        <div style="font-size: 1.8rem; color: var(--secondary); margin-bottom: 1rem;"><i class="fa-solid fa-calculator"></i></div>
+        <h3 style="margin-bottom: 0.5rem;">Multi-Factor Matcher</h3>
+        <p>Computes hybrid scores combining Skill Jaccard Overlap (45%), TF-IDF Semantic Cosine (35%), and Experience Alignment (20%).</p>
+      </div>
+
+      <div class="card" style="border-top: 4px solid var(--warning);">
+        <div style="font-size: 1.8rem; color: var(--warning); margin-bottom: 1rem;"><i class="fa-solid fa-route"></i></div>
+        <h3 style="margin-bottom: 0.5rem;">Skill Gap Roadmaps</h3>
+        <p>Identifies exact missing skills compared to benchmark industry roles or specific jobs, generating a week-by-week learning roadmap.</p>
+      </div>
+
+      <div class="card" style="border-top: 4px solid var(--success);">
+        <div style="font-size: 1.8rem; color: var(--success); margin-bottom: 1rem;"><i class="fa-solid fa-eye"></i></div>
+        <h3 style="margin-bottom: 0.5rem;">Explainable AI Output</h3>
+        <p>No arbitrary percentages. Transparent breakdowns reveal matched skills, missing prerequisites, semantic alignment, and plain-English verdicts.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured Opportunities -->
+  <section style="margin-bottom: 4rem;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1.5rem;">
+      <div>
+        <h2 style="font-size: 1.75rem;">Latest Opportunities</h2>
+        <p>Discover internships and software engineering roles open now</p>
+      </div>
+      <a href="{% url 'job_list' %}" class="btn btn-secondary btn-sm">View All Roles <i class="fa-solid fa-arrow-right"></i></a>
+    </div>
+
+    <div class="jobs-grid">
+      {% for job in featured_jobs %}
+        <div class="job-card">
+          <div>
+            <div class="job-card-top">
+              <div>
+                <h3 style="font-size: 1.15rem; margin-bottom: 0.25rem;">
+                  <a href="{% url 'job_detail' job.id %}">{{ job.title }}</a>
+                </h3>
+                <span style="font-size: 0.88rem; font-weight: 600; color: var(--primary);">{{ job.company.name }}</span>
+              </div>
+              <span class="badge {% if job.is_internship %}badge-warning{% else %}badge-info{% endif %}">
+                {{ job.get_job_type_display }}
+              </span>
+            </div>
+
+            <div class="job-meta">
+              <span class="job-meta-item"><i class="fa-solid fa-location-dot"></i> {{ job.location|default:"Remote" }}</span>
+              <span class="job-meta-item"><i class="fa-solid fa-laptop"></i> {{ job.get_work_mode_display }}</span>
+              {% if job.salary_min %}
+                <span class="job-meta-item"><i class="fa-solid fa-money-bill-wave"></i> ₹{{ job.salary_min|floatformat:0 }} - ₹{{ job.salary_max|floatformat:0 }}</span>
+              {% endif %}
+            </div>
+
+            <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1rem;">
+              {{ job.description|truncatewords:20 }}
+            </p>
+
+            <div style="margin-bottom: 1rem;">
+              {% for skill in job.get_all_skills|slice:":5" %}
+                <span class="tag-chip">{{ skill }}</span>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 0.85rem; margin-top: 0.5rem;">
+            <span style="font-size: 0.8rem; color: var(--text-sub);">Posted {{ job.created_at|timesince }} ago</span>
+            <a href="{% url 'job_detail' job.id %}" class="btn btn-primary btn-sm">View Details</a>
+          </div>
+        </div>
+      {% empty %}
+        <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
+          <i class="fa-solid fa-folder-open" style="font-size: 2.5rem; color: var(--text-sub); margin-bottom: 1rem;"></i>
+          <p>No open postings right now. Run sample seed data to populate realistic opportunities!</p>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+</div>
+{% endblock %}

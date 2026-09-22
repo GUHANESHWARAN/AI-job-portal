@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Resume Intelligence & ATS Scorer - CareerAI{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/student.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 1000px;">
+  <div style="margin-bottom: 2rem;">
+    <h1 style="font-size: 2rem;">AI Resume Intelligence & ATS Scorer</h1>
+    <p>Upload your PDF or DOCX resume to extract technical keywords, evaluate structural health, and receive instant ATS feedback.</p>
+  </div>
+
+  <!-- Upload Card & Dropzone -->
+  <div class="card" style="margin-bottom: 2rem;">
+    <h3 style="font-size: 1.25rem; margin-bottom: 1rem;">Upload Resume Document</h3>
+    
+    <form method="POST" enctype="multipart/form-data">
+      {% csrf_token %}
+      
+      <div id="resume-dropzone" class="dropzone">
+        <div class="dropzone-icon">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+        </div>
+        <h4>Drag & Drop your resume here or click to browse</h4>
+        <p style="margin: 0.5rem 0 1rem; font-size: 0.88rem;">Supported formats: PDF (.pdf), Word (.docx), Plain Text (.txt) &bull; Max size 5MB</p>
+        <div id="selected-file-name" style="font-weight: 700; color: var(--primary); margin-bottom: 0.5rem;"></div>
+        <div style="display: none;">
+          {{ form.resume_file }}
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('id_resume_file').click()">Select Document</button>
+      </div>
+
+      <div style="margin-top: 1.25rem; display: flex; justify-content: space-between; align-items: center;">
+        {% if profile.resume_file %}
+          <div style="font-size: 0.85rem; color: var(--text-muted);">
+            <i class="fa-solid fa-file-check" style="color: var(--success);"></i> Current resume: <strong>{{ profile.resume_file.name }}</strong>
+            <a href="{{ profile.resume_file.url }}" target="_blank" style="margin-left: 0.5rem;"><i class="fa-solid fa-download"></i> Download</a>
+          </div>
+        {% else %}
+          <span></span>
+        {% endif %}
+
+        <button type="submit" class="btn btn-primary">
+          <i class="fa-solid fa-microchip"></i> Run AI Parsing & ATS Analysis
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Analysis Results -->
+  {% if profile.parsed_resume_text %}
+    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; margin-bottom: 2rem;">
+      <!-- ATS Score Card -->
+      <div class="card" style="text-align: center;">
+        <h3 style="font-size: 1.2rem; margin-bottom: 1.25rem;">ATS Compatibility</h3>
+        
+        <div class="ats-circle" style="margin: 0 auto 1.25rem; width: 120px; height: 120px; font-size: 2.2rem; border-color: {% if ats_score >= 80 %}#10b981{% elif ats_score >= 60 %}#f59e0b{% else %}#ef4444{% endif %}; color: {% if ats_score >= 80 %}#047857{% elif ats_score >= 60 %}#b45309{% else %}#b91c1c{% endif %};">
+          {{ ats_score }}
+          <span>/ 100</span>
+        </div>
+
+        <strong style="font-size: 1.1rem; display: block; margin-bottom: 0.25rem;">
+          {% if ats_score >= 80 %}High ATS Compliance{% elif ats_score >= 60 %}Moderate Compliance{% else %}Requires Optimization{% endif %}
+        </strong>
+        <p style="font-size: 0.85rem; color: var(--text-muted);">
+          Scored across contact completeness, section headers, skill keyword density, and metrics.
+        </p>
+      </div>
+
+      <!-- Actionable Improvement Tips -->
+      <div class="card">
+        <h3 style="font-size: 1.2rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);">
+          <i class="fa-solid fa-list-check" style="color: var(--primary);"></i> AI Feedback & Optimization Tips
+        </h3>
+
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+          {% for tip in ats_feedback %}
+            <div class="alert alert-{{ tip.type }}" style="margin-bottom: 0; padding: 0.75rem 1rem;">
+              <div style="display: flex; align-items: flex-start; gap: 0.5rem;">
+                <i class="fa-solid {% if tip.type == 'success' %}fa-circle-check{% elif tip.type == 'danger' %}fa-circle-exclamation{% elif tip.type == 'warning' %}fa-triangle-exclamation{% else %}fa-circle-info{% endif %}" style="margin-top: 3px;"></i>
+                <span style="font-size: 0.88rem;">{{ tip.message }}</span>
+              </div>
+            </div>
+          {% empty %}
+            <p style="color: var(--text-muted);">No critical flaws detected. Your resume structure looks great!</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Extracted Skills Matrix -->
+    <div class="card" style="margin-bottom: 2rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h3 style="font-size: 1.2rem;">
+          <i class="fa-solid fa-tags" style="color: var(--primary);"></i> AI Detected Skills ({{ skills|length }})
+        </h3>
+        <span class="badge badge-primary">Parsed via NLP</span>
+      </div>
+
+      <div>
+        {% for s in skills %}
+          <span class="tag-chip tag-matched" style="font-size: 0.85rem; padding: 0.35rem 0.8rem;">{{ s }}</span>
+        {% empty %}
+          <p style="color: var(--text-muted); font-size: 0.9rem;">No technical keywords were identified in the document.</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Detected Sections -->
+    <div class="card">
+      <h3 style="font-size: 1.2rem; margin-bottom: 1rem;">
+        <i class="fa-solid fa-layer-group" style="color: var(--primary);"></i> Identified Structural Sections
+      </h3>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+        <div style="background: var(--surface-alt); padding: 1rem; border-radius: var(--radius-md);">
+          <strong style="display: block; font-size: 0.9rem;">Education</strong>
+          <span style="font-size: 0.8rem; color: {% if sections.education %}var(--success){% else %}var(--danger){% endif %};">
+            <i class="fa-solid {% if sections.education %}fa-check{% else %}fa-xmark{% endif %}"></i> {% if sections.education %}Detected{% else %}Missing{% endif %}
+          </span>
+        </div>
+        <div style="background: var(--surface-alt); padding: 1rem; border-radius: var(--radius-md);">
+          <strong style="display: block; font-size: 0.9rem;">Experience / Internships</strong>
+          <span style="font-size: 0.8rem; color: {% if sections.experience %}var(--success){% else %}var(--danger){% endif %};">
+            <i class="fa-solid {% if sections.experience %}fa-check{% else %}fa-xmark{% endif %}"></i> {% if sections.experience %}Detected{% else %}Missing{% endif %}
+          </span>
+        </div>
+        <div style="background: var(--surface-alt); padding: 1rem; border-radius: var(--radius-md);">
+          <strong style="display: block; font-size: 0.9rem;">Skills</strong>
+          <span style="font-size: 0.8rem; color: {% if sections.skills %}var(--success){% else %}var(--danger){% endif %};">
+            <i class="fa-solid {% if sections.skills %}fa-check{% else %}fa-xmark{% endif %}"></i> {% if sections.skills %}Detected{% else %}Missing{% endif %}
+          </span>
+        </div>
+        <div style="background: var(--surface-alt); padding: 1rem; border-radius: var(--radius-md);">
+          <strong style="display: block; font-size: 0.9rem;">Projects</strong>
+          <span style="font-size: 0.8rem; color: {% if sections.projects %}var(--success){% else %}var(--danger){% endif %};">
+            <i class="fa-solid {% if sections.projects %}fa-check{% else %}fa-xmark{% endif %}"></i> {% if sections.projects %}Detected{% else %}Missing{% endif %}
+          </span>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/student.js' %}"></script>
+{% endblock %}

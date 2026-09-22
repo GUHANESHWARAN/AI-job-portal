@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Profile - CareerAI{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 900px;">
+  <div style="margin-bottom: 2rem;">
+    <h1 style="font-size: 2rem;">Student Profile & Career Preferences</h1>
+    <p>Keep your profile up to date to enhance AI recommendation accuracy.</p>
+  </div>
+
+  <div class="card">
+    <form method="POST">
+      {% csrf_token %}
+
+      <h3 style="font-size: 1.25rem; margin-bottom: 1.25rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);">
+        <i class="fa-solid fa-id-badge" style="color: var(--primary);"></i> Personal Details
+      </h3>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label">First Name</label>
+          {{ form.first_name }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Last Name</label>
+          {{ form.last_name }}
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          {{ form.email }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone Number</label>
+          {{ form.phone }}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Professional Headline</label>
+        {{ form.headline }}
+        <span class="form-help">e.g. Full-Stack Python Developer | Computer Science Senior</span>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Professional Summary / Bio</label>
+        {{ form.bio }}
+      </div>
+
+      <h3 style="font-size: 1.25rem; margin: 2rem 0 1.25rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);">
+        <i class="fa-solid fa-graduation-cap" style="color: var(--primary);"></i> Academic Background
+      </h3>
+
+      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label">Degree & Major</label>
+          {{ form.degree }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Graduation Year</label>
+          {{ form.graduation_year }}
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label">College / University</label>
+          {{ form.institution }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">CGPA / Percentage</label>
+          {{ form.cgpa }}
+        </div>
+      </div>
+
+      <h3 style="font-size: 1.25rem; margin: 2rem 0 1.25rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);">
+        <i class="fa-solid fa-code" style="color: var(--primary);"></i> Technical Skills & Links
+      </h3>
+
+      <div class="form-group">
+        <label class="form-label">Skills (Comma-separated)</label>
+        {{ form.skills }}
+        <span class="form-help">e.g. Python, Django, MySQL, React, Docker, Machine Learning, Git</span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label">GitHub URL</label>
+          {{ form.github_url }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">LinkedIn URL</label>
+          {{ form.linkedin_url }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Portfolio URL</label>
+          {{ form.portfolio_url }}
+        </div>
+      </div>
+
+      <h3 style="font-size: 1.25rem; margin: 2rem 0 1.25rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);">
+        <i class="fa-solid fa-bullseye" style="color: var(--primary);"></i> Career Preferences
+      </h3>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label">Target Roles</label>
+          {{ form.preferred_job_titles }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Preferred Locations</label>
+          {{ form.preferred_locations }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Expected Salary (₹/yr)</label>
+          {{ form.expected_salary }}
+        </div>
+      </div>
+
+      <div style="margin-top: 2rem; display: flex; justify-content: flex-end;">
+        <button type="submit" class="btn btn-primary btn-lg">
+          <i class="fa-solid fa-floppy-disk"></i> Save Profile Changes
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

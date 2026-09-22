@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if is_edit %}Edit Position{% else %}Post New Position{% endif %} - CareerAI{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/recruiter.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 900px;">
+  <div style="margin-bottom: 2rem;">
+    <div style="display: inline-flex; align-items: center; gap: 0.4rem; background: var(--primary-light); color: var(--primary); padding: 0.3rem 0.8rem; border-radius: var(--radius-full); font-size: 0.82rem; font-weight: 700; margin-bottom: 0.75rem;">
+      <i class="fa-solid fa-sparkles"></i> AI-Assisted Job Creation
+    </div>
+    <h1 style="font-size: 2rem;">{% if is_edit %}Edit Position: {{ job.title }}{% else %}Post a Job or Internship{% endif %}</h1>
+    <p>Target top candidates with our real-time NLP skill extraction and intelligent matching engine.</p>
+  </div>
+
+  <div class="card">
+    <form method="POST">
+      {% csrf_token %}
+
+      <div style="margin-bottom: 1.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border);">
+        <strong style="font-size: 1.05rem;"><i class="fa-solid fa-building"></i> Posting for: {{ company.name }}</strong>
+      </div>
+
+      <!-- Basic Details -->
+      <div class="form-group">
+        <label class="form-label">Position Title *</label>
+        {{ form.title }}
+        <span class="form-help">e.g. Senior Backend Engineer, Machine Learning Intern, Full-Stack Python Developer</span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label">Opportunity Type *</label>
+          {{ form.job_type }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Work Mode *</label>
+          {{ form.work_mode }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Location</label>
+          {{ form.location }}
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label">Seniority / Experience Level *</label>
+          {{ form.experience_level }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Min Experience (Years)</label>
+          {{ form.min_experience_years }}
+        </div>
+      </div>
+
+      <!-- Compensation -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 1rem; align-items: center;">
+        <div class="form-group">
+          <label class="form-label">Salary / Monthly Stipend Min (₹)</label>
+          {{ form.salary_min }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Salary / Monthly Stipend Max (₹)</label>
+          {{ form.salary_max }}
+        </div>
+        <div class="form-group" style="padding-top: 1.25rem;">
+          <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.88rem; cursor: pointer;">
+            {{ form.is_salary_negotiable }} Negotiable
+          </label>
+        </div>
+      </div>
+
+      <!-- Description with Real-time AI Assistant -->
+      <div class="form-group" style="margin-top: 1rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+          <label class="form-label">Job Description *</label>
+          <span class="ai-pill"><i class="fa-solid fa-brain"></i> AI Skill Scanner Active</span>
+        </div>
+        {{ form.description }}
+        <span class="form-help">As you enter the description, our AI engine automatically detects technical skills in real time.</span>
+      </div>
+
+      <!-- Real-Time AI Skill Preview Panel -->
+      <div id="ai-skill-preview-box" class="ai-preview-panel" style="display: none;">
+        <div class="ai-preview-header">
+          <div>
+            <strong style="font-size: 0.92rem; color: #6b21a8;"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Detected Skills:</strong>
+            <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 0.5rem;">Click any skill to add it to Mandatory Requirements</span>
+          </div>
+        </div>
+        <div id="detected-skills-container"></div>
+      </div>
+
+      <!-- Skills Fields -->
+      <div style="margin-top: 1.5rem;">
+        <div class="form-group">
+          <label class="form-label">Required / Mandatory Skills</label>
+          {{ form.required_skills_input }}
+          <span class="form-help">Comma-separated list (e.g. Python, Django, PostgreSQL, Docker)</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Preferred / Nice-to-Have Skills</label>
+          {{ form.preferred_skills_input }}
+          <span class="form-help">Comma-separated list (e.g. Kubernetes, Celery, Redis, AWS)</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Key Responsibilities</label>
+        {{ form.responsibilities }}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Qualifications & Requirements</label>
+        {{ form.requirements }}
+      </div>
+
+      <div class="form-group" style="max-width: 250px;">
+        <label class="form-label">Application Deadline</label>
+        {{ form.deadline }}
+      </div>
+
+      <div style="margin-top: 2rem; display: flex; justify-content: flex-end; gap: 1rem;">
+        <a href="{% url 'recruiter_manage_jobs' %}" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary btn-lg">
+          <i class="fa-solid fa-paper-plane"></i> {% if is_edit %}Update Position{% else %}Publish Opportunity{% endif %}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/recruiter.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Explore Jobs & Internships - CareerAI{% endblock %}
+
+{% block content %}
+<div class="container">
+  
+  <div style="margin-bottom: 2rem;">
+    <h1 style="font-size: 2rem;">Explore Career Opportunities</h1>
+    <p>Discover roles tailored to your background with real-time AI compatibility scoring.</p>
+  </div>
+
+  <!-- Search & Filter Card -->
+  <div class="card" style="margin-bottom: 2rem;">
+    <form method="GET" action="{% url 'job_list' %}">
+      <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 0.75rem; align-items: flex-end;">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label" style="font-size: 0.8rem;">Search Keywords / Title / Company</label>
+          <input type="text" name="q" class="form-input" placeholder="e.g. Python, Full Stack, Google..." value="{{ query }}">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label" style="font-size: 0.8rem;">Work Mode</label>
+          <select name="work_mode" class="form-select">
+            <option value="">All Modes</option>
+            <option value="remote" {% if work_mode == 'remote' %}selected{% endif %}>Remote</option>
+            <option value="hybrid" {% if work_mode == 'hybrid' %}selected{% endif %}>Hybrid</option>
+            <option value="on_site" {% if work_mode == 'on_site' %}selected{% endif %}>On-Site</option>
+          </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label" style="font-size: 0.8rem;">Experience Level</label>
+          <select name="exp_level" class="form-select">
+            <option value="">All Levels</option>
+            <option value="intern" {% if exp_level == 'intern' %}selected{% endif %}>Internship</option>
+            <option value="entry" {% if exp_level == 'entry' %}selected{% endif %}>Entry Level</option>
+            <option value="mid" {% if exp_level == 'mid' %}selected{% endif %}>Mid Level</option>
+            <option value="senior" {% if exp_level == 'senior' %}selected{% endif %}>Senior</option>
+          </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label" style="font-size: 0.8rem;">Sort By</label>
+          <select name="sort" class="form-select">
+            <option value="match" {% if sort_by == 'match' %}selected{% endif %}>Highest AI Match</option>
+            <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest First</option>
+            <option value="oldest" {% if sort_by == 'oldest' %}selected{% endif %}>Oldest First</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="height: 42px;">
+          <i class="fa-solid fa-filter"></i> Filter
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Results Count -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <h3 style="font-size: 1.1rem; color: var(--text-muted);">Showing {{ total_count }} matching opportunities</h3>
+    {% if user.is_authenticated and user.is_student %}
+      <span style="font-size: 0.85rem; color: var(--primary); font-weight: 600;">
+        <i class="fa-solid fa-sparkles"></i> AI match scores calibrated to your profile
+      </span>
+    {% endif %}
+  </div>
+
+  <!-- Jobs Grid -->
+  <div class="jobs-grid">
+    {% for item in page_obj %}
+      <div class="job-card">
+        <div>
+          <div class="job-card-top">
+            <div>
+              <span class="badge {% if item.job.is_internship %}badge-warning{% else %}badge-info{% endif %}" style="margin-bottom: 0.35rem;">
+                {{ item.job.get_job_type_display }}
+              </span>
+              <h3 style="font-size: 1.15rem; margin-bottom: 0.2rem;">
+                <a href="{% url 'job_detail' item.job.id %}">{{ item.job.title }}</a>
+              </h3>
+              <span style="font-size: 0.88rem; font-weight: 600; color: var(--primary);">
+                <i class="fa-solid fa-building"></i> {{ item.job.company.name }}
+              </span>
+            </div>
+
+            {% if item.match %}
+              <div class="match-gauge {% if item.match.overall_score >= 80 %}match-high{% elif item.match.overall_score >= 50 %}match-medium{% else %}match-low{% endif %}">
+                <i class="fa-solid fa-brain"></i> {{ item.match.overall_score }}%
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="job-meta">
+            <span class="job-meta-item"><i class="fa-solid fa-location-dot"></i> {{ item.job.location|default:"Remote" }}</span>
+            <span class="job-meta-item"><i class="fa-solid fa-laptop"></i> {{ item.job.get_work_mode_display }}</span>
+            {% if item.job.salary_min %}
+              <span class="job-meta-item"><i class="fa-solid fa-money-bill-wave"></i> ₹{{ item.job.salary_min|floatformat:0 }} - ₹{{ item.job.salary_max|floatformat:0 }}</span>
+            {% endif %}
+          </div>
+
+          <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1rem; line-height: 1.5;">
+            {{ item.job.description|truncatewords:20 }}
+          </p>
+
+          <div style="margin-bottom: 1rem;">
+            {% for s in item.job.get_all_skills|slice:":5" %}
+              <span class="tag-chip {% if item.match and s in item.match.matched_skills %}tag-matched{% endif %}">{{ s }}</span>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 0.85rem; margin-top: 0.5rem;">
+          {% if item.has_applied %}
+            <span class="badge badge-success"><i class="fa-solid fa-check"></i> Applied</span>
+          {% else %}
+            <span style="font-size: 0.8rem; color: var(--text-sub);">{{ item.job.created_at|timesince }} ago</span>
+          {% endif %}
+          <a href="{% url 'job_detail' item.job.id %}" class="btn btn-primary btn-sm">View Position</a>
+        </div>
+      </div>
+    {% empty %}
+      <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
+        <i class="fa-solid fa-magnifying-glass" style="font-size: 2.5rem; color: var(--text-sub); margin-bottom: 1rem;"></i>
+        <h3 style="margin-bottom: 0.5rem;">No Opportunities Found</h3>
+        <p>Try adjusting your search criteria or resetting filters.</p>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- Pagination -->
+  {% if page_obj.has_other_pages %}
+    <div style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 2.5rem;">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}&q={{ query }}&work_mode={{ work_mode }}&sort={{ sort_by }}" class="btn btn-secondary btn-sm">Previous</a>
+      {% endif %}
+      <span class="btn btn-secondary btn-sm" style="cursor: default;">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}&q={{ query }}&work_mode={{ work_mode }}&sort={{ sort_by }}" class="btn btn-secondary btn-sm">Next</a>
+      {% endif %}
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

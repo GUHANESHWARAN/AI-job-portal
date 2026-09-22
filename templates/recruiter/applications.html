@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Applicant Pipeline - CareerAI{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/recruiter.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div style="margin-bottom: 2rem;">
+    <h1 style="font-size: 2rem;">Candidate Review & Pipeline</h1>
+    <p>Candidates sorted by AI compatibility score with real-time stage progression.</p>
+  </div>
+
+  <!-- Filters -->
+  <div class="card" style="margin-bottom: 2rem;">
+    <form method="GET">
+      <div style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 1rem; align-items: flex-end;">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label">Filter by Position</label>
+          <select name="job_id" class="form-select" onchange="this.form.submit()">
+            <option value="">All Posted Positions</option>
+            {% for job in my_jobs %}
+              <option value="{{ job.id }}" {% if selected_job_id == job.id|stringformat:"s" %}selected{% endif %}>
+                {{ job.title }} ({{ job.applications.count }} applicants)
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label">Pipeline Status</label>
+          <select name="status" class="form-select" onchange="this.form.submit()">
+            <option value="">All Statuses</option>
+            {% for val, label in status_choices %}
+              <option value="{{ val }}" {% if selected_status == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label">Sort Order</label>
+          <select name="sort" class="form-select" onchange="this.form.submit()">
+            <option value="score" {% if sort_by == 'score' %}selected{% endif %}>Highest AI Match</option>
+            <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest First</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="height: 42px;">Filter</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Pipeline Table -->
+  <div class="card">
+    <div class="pipeline-table-container">
+      <table class="pipeline-table">
+        <thead>
+          <tr>
+            <th>Candidate Details</th>
+            <th>Target Position</th>
+            <th>Applied Date</th>
+            <th>AI Match Score</th>
+            <th>Recruitment Stage</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for app in applications %}
+            <tr>
+              <td>
+                <div class="candidate-name-cell">
+                  <div class="candidate-avatar">
+                    {{ app.student.first_name|slice:":1"|default:app.student.username|slice:":1"|upper }}
+                  </div>
+                  <div>
+                    <h4 style="font-size: 0.95rem; margin-bottom: 0.15rem;">
+                      <a href="{% url 'recruiter_candidate_profile' app.student.id %}?job_id={{ app.job.id }}">
+                        {{ app.student.get_full_name|default:app.student.username }}
+                      </a>
+                    </h4>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">
+                      {{ app.student.student_profile.degree|default:"Student" }} &bull; {{ app.student.student_profile.institution|default:"" }}
+                    </span>
+                    <span style="font-size: 0.78rem; color: var(--primary);">
+                      <i class="fa-solid fa-envelope"></i> {{ app.student.email }}
+                    </span>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <strong style="display: block; font-size: 0.9rem;">{{ app.job.title }}</strong>
+                <span class="badge {% if app.job.is_internship %}badge-warning{% else %}badge-info{% endif %}" style="font-size: 0.72rem;">
+                  {{ app.job.get_job_type_display }}
+                </span>
+              </td>
+              <td>{{ app.applied_at|date:"M d, Y" }}</td>
+              <td>
+                <div class="match-gauge {% if app.overall_match_score >= 80 %}match-high{% elif app.overall_match_score >= 50 %}match-medium{% else %}match-low{% endif %}">
+                  <i class="fa-solid fa-brain"></i> {{ app.overall_match_score }}%
+                </div>
+              </td>
+              <td>
+                <select class="form-select pipeline-status-select" data-app-id="{{ app.id }}" style="padding: 0.4rem 0.6rem; font-size: 0.85rem; width: auto;">
+                  {% for val, label in status_choices %}
+                    <option value="{{ val }}" {% if app.status == val %}selected{% endif %}>{{ label }}</option>
+                  {% endfor %}
+                </select>
+              </td>
+              <td>
+                <div style="display: flex; gap: 0.4rem;">
+                  <a href="{% url 'recruiter_candidate_profile' app.student.id %}?job_id={{ app.job.id }}" class="btn btn-secondary btn-sm" title="Inspect Full Dossier">
+                    <i class="fa-solid fa-folder-open"></i> Dossier
+                  </a>
+                  {% if app.resume_file %}
+                    <a href="{{ app.resume_file.url }}" target="_blank" class="btn btn-secondary btn-sm" title="Download Resume">
+                      <i class="fa-solid fa-file-pdf"></i>
+                    </a>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                No applicants match the selected criteria.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/recruiter.js' %}"></script>
+{% endblock %}

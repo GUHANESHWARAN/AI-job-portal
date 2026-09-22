@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Skill Gap Analysis & Roadmap - CareerAI{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/student.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 1000px;">
+  <div style="margin-bottom: 2rem;">
+    <div style="display: inline-flex; align-items: center; gap: 0.4rem; background: var(--primary-light); color: var(--primary); padding: 0.3rem 0.8rem; border-radius: var(--radius-full); font-size: 0.82rem; font-weight: 700; margin-bottom: 0.75rem;">
+      <i class="fa-solid fa-route"></i> Career Readiness Engine
+    </div>
+    <h1 style="font-size: 2rem;">Skill Gap Analyzer & Learning Roadmap</h1>
+    <p>Compare your current technical repertoire against benchmark roles or target jobs to discover missing competencies and follow a guided upskilling roadmap.</p>
+  </div>
+
+  <!-- Role Selection Card -->
+  <div class="card" style="margin-bottom: 2.5rem;">
+    <form method="GET" action="{% url 'student_skill_gap' %}">
+      <div style="display: flex; gap: 1.5rem; margin-bottom: 1.25rem;">
+        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 600;">
+          <input type="radio" name="mode" value="benchmark" {% if selected_mode == 'benchmark' %}checked{% endif %} onchange="this.form.submit()">
+          Industry Benchmark Role
+        </label>
+        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 600;">
+          <input type="radio" name="mode" value="job" {% if selected_mode == 'job' %}checked{% endif %} onchange="this.form.submit()">
+          Specific Active Job Posting
+        </label>
+      </div>
+
+      <div style="display: flex; gap: 1rem; align-items: flex-end;">
+        {% if selected_mode == 'job' %}
+          <div class="form-group" style="flex: 1; margin-bottom: 0;">
+            <label class="form-label">Select Target Job Opportunity</label>
+            <select name="target" class="form-select" onchange="this.form.submit()">
+              {% for job in active_jobs %}
+                <option value="{{ job.id }}" {% if selected_target == job.id|stringformat:"s" %}selected{% endif %}>
+                  {{ job.title }} at {{ job.company.name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        {% else %}
+          <div class="form-group" style="flex: 1; margin-bottom: 0;">
+            <label class="form-label">Select Benchmark Career Profile</label>
+            <select name="target" class="form-select" onchange="this.form.submit()">
+              {% for role_name, details in benchmark_roles.items %}
+                <option value="{{ role_name }}" {% if selected_target == role_name or not selected_target and forloop.first %}selected{% endif %}>
+                  {{ role_name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        {% endif %}
+
+        <button type="submit" class="btn btn-primary" style="height: 42px;">Analyze Gaps</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Gap Analysis Outcome -->
+  <div class="card" style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border);">
+      <div>
+        <span class="badge badge-primary" style="margin-bottom: 0.35rem;">Target Profile</span>
+        <h2 style="font-size: 1.6rem;">{{ gap_analysis.target_title }}</h2>
+      </div>
+
+      <div style="text-align: right;">
+        <span class="badge badge-{{ gap_analysis.readiness_badge }}" style="font-size: 0.95rem; padding: 0.4rem 1rem;">
+          {{ gap_analysis.readiness_level }} ({{ gap_analysis.readiness_score }}% Match)
+        </span>
+        <span style="display: block; font-size: 0.82rem; color: var(--text-muted); margin-top: 0.35rem;">
+          Est. Preparation: <strong>{{ gap_analysis.estimated_weeks }} Weeks</strong>
+        </span>
+      </div>
+    </div>
+
+    <p style="font-size: 1rem; line-height: 1.6; margin-bottom: 1.5rem;">
+      <i class="fa-solid fa-circle-info" style="color: var(--primary);"></i> {{ gap_analysis.readiness_message }}
+    </p>
+
+    <!-- Skills Breakdown Columns -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+      <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: var(--radius-md); padding: 1.25rem;">
+        <h4 style="color: #166534; margin-bottom: 0.75rem;">
+          <i class="fa-solid fa-circle-check"></i> Acquired Skills ({{ gap_analysis.matched_skills|length }})
+        </h4>
+        <div>
+          {% for s in gap_analysis.matched_skills %}
+            <span class="tag-chip tag-matched">{{ s }}</span>
+          {% empty %}
+            <span style="font-size: 0.85rem; color: var(--text-muted);">None of the specific target skills matched your current profile.</span>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: var(--radius-md); padding: 1.25rem;">
+        <h4 style="color: #991b1b; margin-bottom: 0.75rem;">
+          <i class="fa-solid fa-triangle-exclamation"></i> Missing Skills to Learn ({{ gap_analysis.missing_skills|length }})
+        </h4>
+        <div>
+          {% for s in gap_analysis.missing_skills %}
+            <span class="tag-chip tag-missing">{{ s }}</span>
+          {% empty %}
+            <span style="font-size: 0.85rem; color: var(--success-text); font-weight: 600;">You already have all target competencies!</span>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Milestone Learning Roadmap -->
+  <div class="card">
+    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
+      <div style="background: var(--primary); color: white; width: 38px; height: 38px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+        <i class="fa-solid fa-graduation-cap"></i>
+      </div>
+      <div>
+        <h3 style="font-size: 1.35rem;">Milestone Upskilling Roadmap</h3>
+        <p style="font-size: 0.88rem;">Step-by-step guidance tailored to eliminate your specific technical gaps</p>
+      </div>
+    </div>
+
+    <div class="roadmap-timeline">
+      {% for step in gap_analysis.roadmap %}
+        <div class="roadmap-step">
+          <div class="roadmap-dot"></div>
+          <div class="roadmap-content">
+            <span class="roadmap-badge">Phase {{ step.step }} &bull; {{ step.timeframe }}</span>
+            <h4>{{ step.title }}</h4>
+            <p style="font-size: 0.92rem; color: var(--text-main); margin-bottom: 0.75rem;">{{ step.action }}</p>
+
+            <div style="margin-bottom: 0.75rem;">
+              <strong style="font-size: 0.82rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Target Competencies:</strong>
+              {% for skill in step.focus_skills %}
+                <span class="tag-chip">{{ skill }}</span>
+              {% endfor %}
+            </div>
+
+            {% if step.resources %}
+              <div style="background: var(--surface-alt); padding: 0.65rem 0.85rem; border-radius: var(--radius-sm); font-size: 0.82rem;">
+                <strong>Recommended Learning:</strong>
+                <ul style="margin-left: 1.25rem; margin-top: 0.25rem;">
+                  {% for res in step.resources %}
+                    <li>{{ res }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+            {% endif %}
+
+            {% if step.suggested_projects %}
+              <div style="background: #fdf4ff; border: 1px solid #f0abfc; padding: 0.75rem 1rem; border-radius: var(--radius-sm); margin-top: 0.75rem;">
+                <strong style="font-size: 0.85rem; color: #86198f; display: block; margin-bottom: 0.25rem;">
+                  <i class="fa-solid fa-laptop-code"></i> Recommended Capstone Project:
+                </strong>
+                {% for proj in step.suggested_projects %}
+                  <p style="font-size: 0.85rem; color: var(--text-main); margin-bottom: 0.25rem;">
+                    <strong>{{ proj.skill }}:</strong> {{ proj.idea }}
+                  </p>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

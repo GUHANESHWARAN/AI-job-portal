@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Recruiter Dashboard - CareerAI{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/recruiter.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <!-- Header Banner -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <h1 style="font-size: 2rem;">Recruiter Intelligence Center</h1>
+      <p style="font-size: 1.05rem;">
+        {% if recruiter.company %}
+          Managing hiring for <strong>{{ recruiter.company.name }}</strong>
+        {% else %}
+          Manage your job postings and AI-ranked applicants
+        {% endif %}
+      </p>
+    </div>
+    <div style="display: flex; gap: 0.75rem;">
+      <a href="{% url 'recruiter_create_job' %}" class="btn btn-primary">
+        <i class="fa-solid fa-plus-circle"></i> Post New Opportunity
+      </a>
+      <a href="{% url 'recruiter_candidates' %}" class="btn btn-secondary">
+        <i class="fa-solid fa-magnifying-glass-chart"></i> Search Talent Pool
+      </a>
+    </div>
+  </div>
+
+  <!-- Metric Stats Cards -->
+  <div class="stats-grid" style="margin-bottom: 2.5rem;">
+    <div class="stat-card">
+      <div class="stat-icon stat-icon-primary"><i class="fa-solid fa-briefcase"></i></div>
+      <div class="stat-info">
+        <h4>{{ active_jobs_count }}</h4>
+        <p>Active Job Postings</p>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon stat-icon-info"><i class="fa-solid fa-users"></i></div>
+      <div class="stat-info">
+        <h4>{{ total_applicants }}</h4>
+        <p>Total Candidates Received</p>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon stat-icon-success"><i class="fa-solid fa-user-check"></i></div>
+      <div class="stat-info">
+        <h4>{{ shortlisted_applicants }}</h4>
+        <p>Shortlisted / In Interview</p>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon stat-icon-warning"><i class="fa-solid fa-layer-group"></i></div>
+      <div class="stat-info">
+        <h4>{{ total_jobs }}</h4>
+        <p>All-Time Postings</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Active Postings Overview -->
+  <div class="card" style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+      <h3 style="font-size: 1.25rem;">Active Postings</h3>
+      <a href="{% url 'recruiter_manage_jobs' %}" class="btn btn-secondary btn-sm">Manage All Jobs</a>
+    </div>
+
+    <div class="pipeline-table-container">
+      <table class="pipeline-table">
+        <thead>
+          <tr>
+            <th>Role Title</th>
+            <th>Type</th>
+            <th>Applicants</th>
+            <th>Date Posted</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for job in active_jobs %}
+            <tr>
+              <td>
+                <strong style="font-size: 0.95rem; display: block;">{{ job.title }}</strong>
+                <span style="font-size: 0.8rem; color: var(--text-muted);">{{ job.location|default:"Remote" }} &bull; {{ job.get_work_mode_display }}</span>
+              </td>
+              <td><span class="badge {% if job.is_internship %}badge-warning{% else %}badge-info{% endif %}">{{ job.get_job_type_display }}</span></td>
+              <td>
+                <a href="{% url 'recruiter_applications' %}?job_id={{ job.id }}" style="font-weight: 700;">
+                  {{ job.applications.count }} Applicants
+                </a>
+              </td>
+              <td>{{ job.created_at|date:"M d, Y" }}</td>
+              <td>
+                <div style="display: flex; gap: 0.5rem;">
+                  <a href="{% url 'recruiter_applications' %}?job_id={{ job.id }}" class="btn btn-primary btn-sm" title="Review Applicants">
+                    <i class="fa-solid fa-users"></i> Review
+                  </a>
+                  <a href="{% url 'recruiter_edit_job' job.id %}" class="btn btn-secondary btn-sm" title="Edit Post">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                  </a>
+                </div>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                You have no active job postings. Click "Post New Opportunity" above to create one!
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Recent Incoming Applicants Pipeline -->
+  <div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+      <h3 style="font-size: 1.25rem;">Recent Applications (AI Ranked)</h3>
+      <a href="{% url 'recruiter_applications' %}" class="btn btn-secondary btn-sm">Full Pipeline View</a>
+    </div>
+
+    <div class="pipeline-table-container">
+      <table class="pipeline-table">
+        <thead>
+          <tr>
+            <th>Candidate</th>
+            <th>Position</th>
+            <th>Applied Date</th>
+            <th>AI Match</th>
+            <th>Current Stage</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for app in recent_applications %}
+            <tr>
+              <td>
+                <div class="candidate-name-cell">
+                  <div class="candidate-avatar">
+                    {{ app.student.first_name|slice:":1"|default:app.student.username|slice:":1"|upper }}
+                  </div>
+                  <div>
+                    <strong style="display: block;">{{ app.student.get_full_name|default:app.student.username }}</strong>
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">{{ app.student.student_profile.degree|default:"Student" }}</span>
+                  </div>
+                </div>
+              </td>
+              <td>{{ app.job.title }}</td>
+              <td>{{ app.applied_at|date:"M d, Y" }}</td>
+              <td>
+                <div class="match-gauge {% if app.overall_match_score >= 80 %}match-high{% elif app.overall_match_score >= 50 %}match-medium{% else %}match-low{% endif %}">
+                  <i class="fa-solid fa-brain"></i> {{ app.overall_match_score }}%
+                </div>
+              </td>
+              <td>
+                <select class="form-select pipeline-status-select" data-app-id="{{ app.id }}" style="padding: 0.35rem 0.6rem; font-size: 0.85rem; width: auto;">
+                  <option value="applied" {% if app.status == 'applied' %}selected{% endif %}>Applied</option>
+                  <option value="reviewing" {% if app.status == 'reviewing' %}selected{% endif %}>Reviewing</option>
+                  <option value="shortlisted" {% if app.status == 'shortlisted' %}selected{% endif %}>Shortlisted</option>
+                  <option value="interview" {% if app.status == 'interview' %}selected{% endif %}>Interview</option>
+                  <option value="accepted" {% if app.status == 'accepted' %}selected{% endif %}>Offer</option>
+                  <option value="rejected" {% if app.status == 'rejected' %}selected{% endif %}>Rejected</option>
+                </select>
+              </td>
+              <td>
+                <a href="{% url 'recruiter_candidate_profile' app.student.id %}?job_id={{ app.job.id }}" class="btn btn-secondary btn-sm">
+                  Dossier <i class="fa-solid fa-chevron-right"></i>
+                </a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                No candidate applications received yet.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/recruiter.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Internship Opportunities - CareerAI{% endblock %}
+
+{% block content %}
+<div class="container">
+  
+  <div style="margin-bottom: 2rem;">
+    <div style="display: inline-flex; align-items: center; gap: 0.4rem; background: var(--warning-light); color: var(--warning-text); padding: 0.3rem 0.8rem; border-radius: var(--radius-full); font-size: 0.82rem; font-weight: 700; margin-bottom: 0.75rem;">
+      <i class="fa-solid fa-graduation-cap"></i> Student & Graduate Programs
+    </div>
+    <h1 style="font-size: 2rem;">Internship & Trainee Openings</h1>
+    <p>Launch your tech career with summer internships, co-ops, and student engineering roles matched to your coursework and projects.</p>
+  </div>
+
+  <!-- Search & Filter Card -->
+  <div class="card" style="margin-bottom: 2rem;">
+    <form method="GET" action="{% url 'internship_list' %}">
+      <div style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 0.75rem; align-items: flex-end;">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label" style="font-size: 0.8rem;">Search Keywords / Title / Company</label>
+          <input type="text" name="q" class="form-input" placeholder="e.g. Python Intern, Frontend Intern..." value="{{ query }}">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label" style="font-size: 0.8rem;">Work Mode</label>
+          <select name="work_mode" class="form-select">
+            <option value="">All Modes</option>
+            <option value="remote" {% if work_mode == 'remote' %}selected{% endif %}>Remote</option>
+            <option value="hybrid" {% if work_mode == 'hybrid' %}selected{% endif %}>Hybrid</option>
+            <option value="on_site" {% if work_mode == 'on_site' %}selected{% endif %}>On-Site</option>
+          </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label" style="font-size: 0.8rem;">Location</label>
+          <input type="text" name="location" class="form-input" placeholder="City or Country" value="{{ location }}">
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="height: 42px;">
+          <i class="fa-solid fa-filter"></i> Filter
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <h3 style="font-size: 1.1rem; color: var(--text-muted);">Found {{ total_count }} active internships</h3>
+  </div>
+
+  <!-- Grid -->
+  <div class="jobs-grid">
+    {% for item in page_obj %}
+      <div class="job-card">
+        <div>
+          <div class="job-card-top">
+            <div>
+              <span class="badge badge-warning" style="margin-bottom: 0.35rem;">
+                <i class="fa-solid fa-graduation-cap"></i> Internship
+              </span>
+              <h3 style="font-size: 1.15rem; margin-bottom: 0.2rem;">
+                <a href="{% url 'job_detail' item.job.id %}">{{ item.job.title }}</a>
+              </h3>
+              <span style="font-size: 0.88rem; font-weight: 600; color: var(--primary);">
+                <i class="fa-solid fa-building"></i> {{ item.job.company.name }}
+              </span>
+            </div>
+
+            {% if item.match %}
+              <div class="match-gauge {% if item.match.overall_score >= 80 %}match-high{% elif item.match.overall_score >= 50 %}match-medium{% else %}match-low{% endif %}">
+                <i class="fa-solid fa-brain"></i> {{ item.match.overall_score }}%
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="job-meta">
+            <span class="job-meta-item"><i class="fa-solid fa-location-dot"></i> {{ item.job.location|default:"Remote" }}</span>
+            <span class="job-meta-item"><i class="fa-solid fa-laptop"></i> {{ item.job.get_work_mode_display }}</span>
+            {% if item.job.salary_min %}
+              <span class="job-meta-item"><i class="fa-solid fa-money-bill-wave"></i> ₹{{ item.job.salary_min|floatformat:0 }}/mo</span>
+            {% endif %}
+          </div>
+
+          <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1rem; line-height: 1.5;">
+            {{ item.job.description|truncatewords:20 }}
+          </p>
+
+          <div style="margin-bottom: 1rem;">
+            {% for s in item.job.get_all_skills|slice:":5" %}
+              <span class="tag-chip {% if item.match and s in item.match.matched_skills %}tag-matched{% endif %}">{{ s }}</span>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 0.85rem; margin-top: 0.5rem;">
+          {% if item.has_applied %}
+            <span class="badge badge-success"><i class="fa-solid fa-check"></i> Applied</span>
+          {% else %}
+            <span style="font-size: 0.8rem; color: var(--text-sub);">{{ item.job.created_at|timesince }} ago</span>
+          {% endif %}
+          <a href="{% url 'job_detail' item.job.id %}" class="btn btn-primary btn-sm">Apply for Internship</a>
+        </div>
+      </div>
+    {% empty %}
+      <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
+        <i class="fa-solid fa-graduation-cap" style="font-size: 2.5rem; color: var(--text-sub); margin-bottom: 1rem;"></i>
+        <h3 style="margin-bottom: 0.5rem;">No Internships Found</h3>
+        <p>Check back frequently for upcoming seasonal internship postings.</p>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- Pagination -->
+  {% if page_obj.has_other_pages %}
+    <div style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 2.5rem;">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}&q={{ query }}&work_mode={{ work_mode }}" class="btn btn-secondary btn-sm">Previous</a>
+      {% endif %}
+      <span class="btn btn-secondary btn-sm" style="cursor: default;">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}&q={{ query }}&work_mode={{ work_mode }}" class="btn btn-secondary btn-sm">Next</a>
+      {% endif %}
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

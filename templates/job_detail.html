@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ job.title }} at {{ job.company.name }} - CareerAI{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 1000px;">
+  <div style="margin-bottom: 1.5rem;">
+    <a href="{% url 'job_list' %}" class="btn btn-secondary btn-sm"><i class="fa-solid fa-arrow-left"></i> Back to Opportunities</a>
+  </div>
+
+  <!-- Main Job Header Card -->
+  <div class="card" style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <span class="badge {% if job.is_internship %}badge-warning{% else %}badge-primary{% endif %}" style="margin-bottom: 0.5rem;">
+          {{ job.get_job_type_display }}
+        </span>
+        <h1 style="font-size: 2rem; margin-bottom: 0.25rem;">{{ job.title }}</h1>
+        <div style="font-size: 1.1rem; font-weight: 600; color: var(--primary); margin-bottom: 0.75rem;">
+          <a href="{% url 'company_detail' job.company.slug %}"><i class="fa-solid fa-building"></i> {{ job.company.name }}</a>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.75rem;">
+        {% if user.is_authenticated and user.is_student %}
+          {% if has_applied %}
+            <span class="badge badge-success" style="font-size: 0.95rem; padding: 0.5rem 1rem;">
+              <i class="fa-solid fa-circle-check"></i> Applied ({{ application.get_status_display }})
+            </span>
+          {% else %}
+            <a href="{% url 'apply_job' job.id %}" class="btn btn-primary btn-lg">
+              <i class="fa-solid fa-paper-plane"></i> Apply Now
+            </a>
+          {% endif %}
+          <a href="{% url 'student_skill_gap' %}?mode=job&target={{ job.id }}" class="btn btn-secondary btn-sm">
+            <i class="fa-solid fa-route"></i> Run Skill Gap Analysis
+          </a>
+        {% elif not user.is_authenticated %}
+          <a href="{% url 'login' %}?next={% url 'job_detail' job.id %}" class="btn btn-primary btn-lg">
+            Sign In to Apply
+          </a>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Metadata Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
+      <div>
+        <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">Location</span>
+        <strong style="font-size: 0.95rem;"><i class="fa-solid fa-location-dot"></i> {{ job.location|default:"Remote" }}</strong>
+      </div>
+      <div>
+        <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">Work Mode</span>
+        <strong style="font-size: 0.95rem;"><i class="fa-solid fa-laptop-code"></i> {{ job.get_work_mode_display }}</strong>
+      </div>
+      <div>
+        <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">Experience</span>
+        <strong style="font-size: 0.95rem;"><i class="fa-solid fa-user-clock"></i> {{ job.get_experience_level_display }}</strong>
+      </div>
+      <div>
+        <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">Compensation</span>
+        <strong style="font-size: 0.95rem; color: var(--success-text);">
+          {% if job.salary_min %}
+            ₹{{ job.salary_min|floatformat:0 }} - ₹{{ job.salary_max|floatformat:0 }}
+          {% else %}
+            Competitive
+          {% endif %}
+        </strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Intelligence Match Breakdown (For Students) -->
+  {% if user.is_authenticated and user.is_student and match_info %}
+    <div class="card" style="margin-bottom: 2rem; border-left: 6px solid var(--primary); background: #faf5ff;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <div style="background: var(--primary); color: white; width: 36px; height: 36px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center;">
+            <i class="fa-solid fa-brain"></i>
+          </div>
+          <div>
+            <h3 style="font-size: 1.25rem;">AI Compatibility Analysis</h3>
+            <p style="font-size: 0.85rem;">Calculated snapshot matching your resume and profile against this position</p>
+          </div>
+        </div>
+        <div class="match-gauge {% if match_info.overall_score >= 80 %}match-high{% elif match_info.overall_score >= 50 %}match-medium{% else %}match-low{% endif %}">
+          <i class="fa-solid fa-chart-simple"></i> {{ match_info.overall_score }}% Match
+        </div>
+      </div>
+
+      <!-- Sub-scores -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin: 1.25rem 0;">
+        <div style="background: white; padding: 0.85rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--border);">
+          <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">Skill Overlap</span>
+          <strong style="font-size: 1.15rem; color: var(--primary);">{{ match_info.skill_score }}%</strong>
+        </div>
+        <div style="background: white; padding: 0.85rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--border);">
+          <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">Semantic Relevance</span>
+          <strong style="font-size: 1.15rem; color: var(--secondary);">{{ match_info.semantic_score }}%</strong>
+        </div>
+        <div style="background: white; padding: 0.85rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--border);">
+          <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">Experience Alignment</span>
+          <strong style="font-size: 1.15rem; color: var(--success);">{{ match_info.experience_score }}%</strong>
+        </div>
+      </div>
+
+      <div style="background: white; padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: 1rem;">
+        <p style="font-size: 0.92rem; color: var(--text-main); font-weight: 500;">
+          <i class="fa-solid fa-comment-dots" style="color: var(--primary); margin-right: 0.4rem;"></i>
+          <strong>AI Verdict:</strong> {{ match_info.summary_explanation }}
+        </p>
+      </div>
+
+      <!-- Matched vs Missing Skills -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div>
+          <span style="font-size: 0.82rem; font-weight: 700; color: #065f46; display: block; margin-bottom: 0.4rem;">
+            <i class="fa-solid fa-circle-check"></i> Matched Skills ({{ match_info.matched_skills|length }})
+          </span>
+          <div>
+            {% for s in match_info.matched_skills %}
+              <span class="tag-chip tag-matched">{{ s }}</span>
+            {% empty %}
+              <span style="font-size: 0.82rem; color: var(--text-muted);">No direct keyword matches detected.</span>
+            {% endfor %}
+          </div>
+        </div>
+        <div>
+          <span style="font-size: 0.82rem; font-weight: 700; color: #991b1b; display: block; margin-bottom: 0.4rem;">
+            <i class="fa-solid fa-circle-xmark"></i> Missing Required Skills ({{ match_info.missing_required|length }})
+          </span>
+          <div>
+            {% for s in match_info.missing_required %}
+              <span class="tag-chip tag-missing">{{ s }}</span>
+            {% empty %}
+              <span style="font-size: 0.82rem; color: var(--success); font-weight: 600;">You possess all core required skills!</span>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Job Content Sections -->
+  <div class="card" style="margin-bottom: 2rem;">
+    <h3 style="margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);">About the Role</h3>
+    <div style="font-size: 1rem; line-height: 1.7; color: var(--text-main); white-space: pre-line; margin-bottom: 2rem;">
+      {{ job.description }}
+    </div>
+
+    {% if job.responsibilities %}
+      <h3 style="margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);">Key Responsibilities</h3>
+      <div style="font-size: 1rem; line-height: 1.7; color: var(--text-main); white-space: pre-line; margin-bottom: 2rem;">
+        {{ job.responsibilities }}
+      </div>
+    {% endif %}
+
+    {% if job.requirements %}
+      <h3 style="margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);">Qualifications & Requirements</h3>
+      <div style="font-size: 1rem; line-height: 1.7; color: var(--text-main); white-space: pre-line; margin-bottom: 2rem;">
+        {{ job.requirements }}
+      </div>
+    {% endif %}
+
+    <!-- Skills List -->
+    <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
+      <h4 style="margin-bottom: 0.75rem;">Required Technical Skills</h4>
+      <div style="margin-bottom: 1.25rem;">
+        {% for skill in job.required_skills %}
+          <span class="tag-chip" style="font-weight: 600;">{{ skill }}</span>
+        {% empty %}
+          <span class="text-muted">No specific mandatory skills listed.</span>
+        {% endfor %}
+      </div>
+
+      {% if job.preferred_skills %}
+        <h4 style="margin-bottom: 0.75rem;">Preferred / Bonus Skills</h4>
+        <div>
+          {% for skill in job.preferred_skills %}
+            <span class="tag-chip">{{ skill }}</span>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Company Summary Card -->
+  <div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+      <div>
+        <h3 style="font-size: 1.25rem;">About {{ job.company.name }}</h3>
+        <p style="font-size: 0.85rem;">{{ job.company.industry }} &bull; {{ job.company.get_company_size_display }}</p>
+      </div>
+      <a href="{% url 'company_detail' job.company.slug %}" class="btn btn-secondary btn-sm">Company Page</a>
+    </div>
+    <p style="font-size: 0.95rem; line-height: 1.6;">
+      {{ job.company.description|default:"A leading technology innovation enterprise." }}
+    </p>
+  </div>
+
+</div>
+{% endblock %}

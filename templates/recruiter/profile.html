@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Recruiter Profile - CareerAI{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 800px;">
+  <div style="margin-bottom: 2rem;">
+    <h1 style="font-size: 2rem;">Recruiter & Employer Profile</h1>
+    <p>Manage your company affiliation and recruiter contact credentials.</p>
+  </div>
+
+  <div class="card">
+    <form method="POST">
+      {% csrf_token %}
+
+      <h3 style="font-size: 1.25rem; margin-bottom: 1.25rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);">
+        <i class="fa-solid fa-user-tie" style="color: var(--primary);"></i> Recruiter Information
+      </h3>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label">First Name</label>
+          {{ form.first_name }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Last Name</label>
+          {{ form.last_name }}
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          {{ form.email }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone Number</label>
+          {{ form.phone }}
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label">Designation / Title</label>
+          {{ form.designation }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Department / Division</label>
+          {{ form.department }}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">LinkedIn Profile URL</label>
+        {{ form.linkedin_url }}
+      </div>
+
+      <h3 style="font-size: 1.25rem; margin: 2rem 0 1.25rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);">
+        <i class="fa-solid fa-building" style="color: var(--primary);"></i> Hiring Company
+      </h3>
+
+      <div class="form-group">
+        <label class="form-label">Associated Organization</label>
+        {{ form.company }}
+        <span class="form-help">Select the verified organization you are recruiting on behalf of.</span>
+      </div>
+
+      <div style="margin-top: 2rem; display: flex; justify-content: flex-end;">
+        <button type="submit" class="btn btn-primary btn-lg">
+          <i class="fa-solid fa-floppy-disk"></i> Save Recruiter Profile
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

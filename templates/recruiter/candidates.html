@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}AI Candidate Discovery - CareerAI{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/recruiter.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div style="margin-bottom: 2rem;">
+    <div style="display: inline-flex; align-items: center; gap: 0.4rem; background: var(--primary-light); color: var(--primary); padding: 0.3rem 0.8rem; border-radius: var(--radius-full); font-size: 0.82rem; font-weight: 700; margin-bottom: 0.75rem;">
+      <i class="fa-solid fa-magnifying-glass-chart"></i> Proactive Talent Sourcing
+    </div>
+    <h1 style="font-size: 2rem;">AI Candidate Discovery</h1>
+    <p>Discover high-potential students across the portal ranked by similarity against your position specifications.</p>
+  </div>
+
+  <!-- Job Selector Card -->
+  <div class="card" style="margin-bottom: 2rem;">
+    <form method="GET">
+      <div style="display: flex; gap: 1rem; align-items: flex-end;">
+        <div class="form-group" style="flex: 1; margin-bottom: 0;">
+          <label class="form-label">Evaluate Talent Against Open Position:</label>
+          <select name="job_id" class="form-select" onchange="this.form.submit()">
+            {% for job in my_jobs %}
+              <option value="{{ job.id }}" {% if selected_job.id == job.id %}selected{% endif %}>
+                {{ job.title }} ({{ job.get_job_type_display }})
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary" style="height: 42px;">Rank Talent</button>
+      </div>
+    </form>
+  </div>
+
+  {% if selected_job %}
+    <div style="margin-bottom: 1.5rem;">
+      <h3 style="font-size: 1.25rem;">
+        Top Ranked Candidates for <span style="color: var(--primary);">{{ selected_job.title }}</span>
+      </h3>
+      <p style="font-size: 0.88rem; color: var(--text-muted);">
+        Required skills evaluated: {{ selected_job.required_skills|join:", " }}
+      </p>
+    </div>
+
+    <!-- Candidate Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem;">
+      {% for item in ranked_candidates %}
+        <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+              <div class="candidate-name-cell">
+                <div class="candidate-avatar">
+                  {{ item.student.user.first_name|slice:":1"|default:item.student.user.username|slice:":1"|upper }}
+                </div>
+                <div>
+                  <h4 style="font-size: 1.05rem; margin-bottom: 0.15rem;">
+                    {{ item.student.user.get_full_name|default:item.student.user.username }}
+                  </h4>
+                  <span style="font-size: 0.82rem; color: var(--text-muted); display: block;">
+                    {{ item.student.degree|default:"Student" }} &bull; Class of {{ item.student.graduation_year|default:"2026" }}
+                  </span>
+                  {% if item.student.cgpa %}
+                    <span style="font-size: 0.8rem; font-weight: 600; color: var(--success);">CGPA: {{ item.student.cgpa }}</span>
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="match-gauge {% if item.match.overall_score >= 80 %}match-high{% elif item.match.overall_score >= 50 %}match-medium{% else %}match-low{% endif %}">
+                <i class="fa-solid fa-brain"></i> {{ item.match.overall_score }}%
+              </div>
+            </div>
+
+            <!-- Matched Skills -->
+            <div style="margin-bottom: 1rem;">
+              <strong style="font-size: 0.8rem; color: #065f46; display: block; margin-bottom: 0.35rem;">
+                <i class="fa-solid fa-check"></i> Matched Skills:
+              </strong>
+              <div>
+                {% for s in item.match.matched_skills|slice:":6" %}
+                  <span class="tag-chip tag-matched">{{ s }}</span>
+                {% empty %}
+                  <span style="font-size: 0.8rem; color: var(--text-sub);">Basic profile match</span>
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Missing Skills -->
+            {% if item.match.missing_required %}
+              <div style="margin-bottom: 1rem;">
+                <strong style="font-size: 0.8rem; color: #991b1b; display: block; margin-bottom: 0.35rem;">
+                  <i class="fa-solid fa-xmark"></i> Missing Prerequisites:
+                </strong>
+                <div>
+                  {% for s in item.match.missing_required|slice:":3" %}
+                    <span class="tag-chip tag-missing">{{ s }}</span>
+                  {% endfor %}
+                </div>
+              </div>
+            {% endif %}
+          </div>
+
+          <div style="border-top: 1px solid var(--border); padding-top: 0.85rem; display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+            <span style="font-size: 0.8rem; color: var(--text-muted);">{{ item.match.verdict }}</span>
+            <a href="{% url 'recruiter_candidate_profile' item.student.user.id %}?job_id={{ selected_job.id }}" class="btn btn-primary btn-sm">
+              Inspect Full Dossier <i class="fa-solid fa-chevron-right"></i>
+            </a>
+          </div>
+        </div>
+      {% empty %}
+        <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
+          <p>No candidate profiles currently available in the talent pool.</p>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="card" style="text-align: center; padding: 3rem;">
+      <p>Post a job first to use AI Candidate Discovery!</p>
+      <a href="{% url 'recruiter_create_job' %}" class="btn btn-primary" style="margin-top: 1rem;">Create Job Posting</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

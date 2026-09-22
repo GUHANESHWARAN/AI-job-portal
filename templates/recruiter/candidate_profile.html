@@ -1,0 +1,234 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Candidate Dossier: {{ student.user.get_full_name|default:student.user.username }} - CareerAI{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/recruiter.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 1000px;">
+  <div style="margin-bottom: 1.5rem;">
+    <a href="{% if job %}{% url 'recruiter_applications' %}?job_id={{ job.id }}{% else %}{% url 'recruiter_candidates' %}{% endif %}" class="btn btn-secondary btn-sm">
+      <i class="fa-solid fa-arrow-left"></i> Back to Pipeline
+    </a>
+  </div>
+
+  <!-- Candidate Header Profile -->
+  <div class="card" style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+      <div style="display: flex; gap: 1.5rem; align-items: center;">
+        <div class="candidate-avatar" style="width: 72px; height: 72px; font-size: 2rem;">
+          {{ student.user.first_name|slice:":1"|default:student.user.username|slice:":1"|upper }}
+        </div>
+        <div>
+          <h1 style="font-size: 1.85rem; margin-bottom: 0.25rem;">
+            {{ student.user.get_full_name|default:student.user.username }}
+          </h1>
+          <p style="font-size: 1rem; color: var(--primary); font-weight: 600; margin-bottom: 0.25rem;">
+            {{ student.headline|default:"Student / Software Engineer" }}
+          </p>
+          <div style="font-size: 0.88rem; color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 1rem;">
+            <span><i class="fa-solid fa-envelope"></i> {{ student.user.email }}</span>
+            {% if student.user.phone %}<span><i class="fa-solid fa-phone"></i> {{ student.user.phone }}</span>{% endif %}
+            {% if student.location %}<span><i class="fa-solid fa-location-dot"></i> {{ student.location }}</span>{% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Links & Resume Download -->
+      <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;">
+        <div style="display: flex; gap: 0.5rem;">
+          {% if student.github_url %}
+            <a href="{{ student.github_url }}" target="_blank" class="btn btn-secondary btn-sm"><i class="fa-brands fa-github"></i> GitHub</a>
+          {% endif %}
+          {% if student.linkedin_url %}
+            <a href="{{ student.linkedin_url }}" target="_blank" class="btn btn-secondary btn-sm"><i class="fa-brands fa-linkedin"></i> LinkedIn</a>
+          {% endif %}
+          {% if student.portfolio_url %}
+            <a href="{{ student.portfolio_url }}" target="_blank" class="btn btn-secondary btn-sm"><i class="fa-solid fa-globe"></i> Portfolio</a>
+          {% endif %}
+        </div>
+
+        {% if student.resume_file %}
+          <a href="{{ student.resume_file.url }}" target="_blank" class="btn btn-primary btn-sm" style="margin-top: 0.5rem;">
+            <i class="fa-solid fa-file-pdf"></i> Download Attached Resume
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Evaluation Breakdown (If Job Specified) -->
+  {% if job and match_info %}
+    <div class="card" style="margin-bottom: 2rem; border-left: 6px solid var(--primary); background: #faf5ff;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+        <div>
+          <span class="badge badge-primary">Evaluation Against Position</span>
+          <h2 style="font-size: 1.35rem; margin-top: 0.25rem;">{{ job.title }}</h2>
+        </div>
+        <div class="match-gauge {% if match_info.overall_score >= 80 %}match-high{% elif match_info.overall_score >= 50 %}match-medium{% else %}match-low{% endif %}" style="font-size: 1.15rem; padding: 0.5rem 1rem;">
+          <i class="fa-solid fa-brain"></i> {{ match_info.overall_score }}% Match
+        </div>
+      </div>
+
+      <!-- Progress Bars -->
+      <div style="background: white; border-radius: var(--radius-md); padding: 1.25rem; border: 1px solid var(--border); margin-bottom: 1.25rem;">
+        <div class="breakdown-row">
+          <span style="font-size: 0.88rem; font-weight: 600; width: 140px;">Skill Match (45%)</span>
+          <div class="breakdown-bar-container">
+            <div class="breakdown-bar" style="width: {{ match_info.skill_score }}%;"></div>
+          </div>
+          <strong style="width: 50px; text-align: right;">{{ match_info.skill_score }}%</strong>
+        </div>
+
+        <div class="breakdown-row">
+          <span style="font-size: 0.88rem; font-weight: 600; width: 140px;">Semantic Fit (35%)</span>
+          <div class="breakdown-bar-container">
+            <div class="breakdown-bar" style="width: {{ match_info.semantic_score }}%; background: var(--secondary);"></div>
+          </div>
+          <strong style="width: 50px; text-align: right;">{{ match_info.semantic_score }}%</strong>
+        </div>
+
+        <div class="breakdown-row" style="border-bottom: none;">
+          <span style="font-size: 0.88rem; font-weight: 600; width: 140px;">Experience (20%)</span>
+          <div class="breakdown-bar-container">
+            <div class="breakdown-bar" style="width: {{ match_info.experience_score }}%; background: var(--success);"></div>
+          </div>
+          <strong style="width: 50px; text-align: right;">{{ match_info.experience_score }}%</strong>
+        </div>
+      </div>
+
+      <!-- Strengths and Weaknesses -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: var(--radius-md); padding: 1rem;">
+          <strong style="font-size: 0.85rem; color: #166534; display: block; margin-bottom: 0.4rem;">
+            <i class="fa-solid fa-thumbs-up"></i> Candidate Strengths:
+          </strong>
+          <ul style="font-size: 0.85rem; margin-left: 1.25rem; color: #14532d;">
+            {% for str in match_info.strengths %}
+              <li>{{ str }}</li>
+            {% empty %}
+              <li>Basic entry-level technical match.</li>
+            {% endfor %}
+          </ul>
+        </div>
+
+        <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: var(--radius-md); padding: 1rem;">
+          <strong style="font-size: 0.85rem; color: #991b1b; display: block; margin-bottom: 0.4rem;">
+            <i class="fa-solid fa-circle-exclamation"></i> Gaps & Missing Skills:
+          </strong>
+          <ul style="font-size: 0.85rem; margin-left: 1.25rem; color: #7f1d1d;">
+            {% for weak in match_info.weaknesses %}
+              <li>{{ weak }}</li>
+            {% empty %}
+              <li>No significant gaps detected for this role.</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+
+      <!-- Pipeline Action Bar if Application Exists -->
+      {% if application %}
+        <div style="background: white; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <strong style="display: block; font-size: 0.9rem;">Recruitment Pipeline Status</strong>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">Change candidate stage to update applicant view</span>
+          </div>
+
+          <div style="display: flex; gap: 0.75rem; align-items: center;">
+            <select id="stage-updater" class="form-select" style="width: auto; font-weight: 600;">
+              {% for val, label in status_choices %}
+                <option value="{{ val }}" {% if application.status == val %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+            <button type="button" class="btn btn-primary btn-sm" onclick="saveStatus()">Update Status</button>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <!-- Academic & Skills Overview -->
+  <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+    <div class="card">
+      <h3 style="font-size: 1.2rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);">
+        <i class="fa-solid fa-graduation-cap" style="color: var(--primary);"></i> Academic Qualifications
+      </h3>
+      <p style="font-size: 1rem; font-weight: 600; margin-bottom: 0.25rem;">
+        {{ student.degree|default:"Degree Not Specified" }}
+      </p>
+      <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+        {{ student.institution|default:"University / College" }} &bull; Class of {{ student.graduation_year|default:"2026" }}
+      </p>
+      {% if student.cgpa %}
+        <span class="badge badge-success">CGPA / Grade: {{ student.cgpa }}</span>
+      {% endif %}
+
+      {% if student.bio %}
+        <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+          <h4 style="margin-bottom: 0.5rem;">Professional Bio</h4>
+          <p style="font-size: 0.92rem; line-height: 1.6;">{{ student.bio }}</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Skills Palette -->
+    <div class="card">
+      <h3 style="font-size: 1.2rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);">
+        <i class="fa-solid fa-tags" style="color: var(--primary);"></i> Verified Skills ({{ student.get_skills_list|length }})
+      </h3>
+      <div>
+        {% for s in student.get_skills_list %}
+          <span class="tag-chip tag-matched">{{ s }}</span>
+        {% empty %}
+          <p style="font-size: 0.85rem; color: var(--text-muted);">No skills recorded.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Parsed Resume Content Preview -->
+  {% if student.parsed_resume_text %}
+    <div class="card">
+      <h3 style="font-size: 1.2rem; margin-bottom: 1rem;">
+        <i class="fa-solid fa-file-lines" style="color: var(--primary);"></i> Extracted Resume Plain Text
+      </h3>
+      <pre style="background: var(--surface-alt); padding: 1.25rem; border-radius: var(--radius-md); font-family: inherit; font-size: 0.88rem; line-height: 1.6; white-space: pre-wrap; max-height: 400px; overflow-y: auto;">
+{{ student.parsed_resume_text }}
+      </pre>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if application %}
+<script>
+  function saveStatus() {
+    const stageSelect = document.getElementById('stage-updater');
+    const newStatus = stageSelect.value;
+    
+    fetch('/recruiter/api/applications/{{ application.id }}/status/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify({ status: newStatus })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        alert('Application stage successfully updated to ' + data.status_display);
+      } else {
+        alert('Error: ' + data.error);
+      }
+    })
+    .catch(err => alert('Request failed: ' + err));
+  }
+</script>
+{% endif %}
+{% endblock %}
