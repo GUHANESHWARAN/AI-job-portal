@@ -1,10 +1,13 @@
+from django.shortcuts import render
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
+from django.http import JsonResponse
 from .forms import UserLoginForm, UserRegistrationForm
 from .models import User
 
+# Create your views here.
 
 def register_view(request):
     if request.user.is_authenticated:
@@ -15,7 +18,7 @@ def register_view(request):
         if form.is_valid():
             user = form.save()
             login(request, user)
-            messages.success(request, f"Welcome to AI Job Portal, {user.first_name or user.username}! Your account has been created.")
+            messages.success(request, f"Welcome to CareerAI, {user.first_name or user.username}! Your account has been created.")
             return redirect('role_redirect')
         else:
             messages.error(request, "Please correct the errors below to register.")
@@ -58,7 +61,7 @@ def logout_view(request):
 def role_redirect_view(request):
     user = request.user
     if user.is_superuser or user.role == User.ROLE_ADMIN:
-        return redirect('/admin/')
+        return redirect('admin_dashboard')
     elif user.role == User.ROLE_RECRUITER:
         return redirect('recruiter_dashboard')
     else:
@@ -85,3 +88,11 @@ def home_view(request):
     }
     return render(request, 'home.html', context)
 
+
+def check_email_view(request):
+    """AJAX endpoint — returns JSON {available: bool} for real-time email uniqueness check."""
+    email = request.GET.get('email', '').strip().lower()
+    if not email:
+        return JsonResponse({'available': False, 'error': 'No email provided'})
+    exists = User.objects.filter(email__iexact=email).exists()
+    return JsonResponse({'available': not exists})

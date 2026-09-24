@@ -37,3 +37,4 @@ class RecruiterProfileForm(forms.ModelForm):
             user.save()
             profile.save()
         return profile
+

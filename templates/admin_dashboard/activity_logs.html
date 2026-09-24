@@ -1,0 +1,510 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block content %}
+<style>
+  /* ─── Page shell ─────────────────────────────────────────────────── */
+  .al-page { display: flex; flex-direction: column; gap: 24px; }
+
+  /* ─── Page heading ───────────────────────────────────────────────── */
+  .al-heading { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  .al-heading-left .al-label {
+    font-size: 11px; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase; color: #71807B; margin-bottom: 4px;
+  }
+  .al-heading-left h2 {
+    font-size: 24px; font-weight: 700; color: #24302D; margin: 0; line-height: 1.2;
+  }
+  .al-heading-left h2 span { color: #4F46E5; }
+  .al-refresh-btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 8px 16px; border-radius: 8px;
+    background: #fff; border: 1.5px solid #E4E9E5;
+    color: #4F46E5; font-size: 13px; font-weight: 600;
+    cursor: pointer; text-decoration: none;
+    transition: background .18s, border-color .18s, box-shadow .18s;
+  }
+  .al-refresh-btn:hover {
+    background: #F0F5F3; border-color: #0EA5E9;
+    box-shadow: 0 2px 8px rgba(79,70,229,.10);
+  }
+
+  /* ─── Filter Tabs ────────────────────────────────────────────────── */
+  .al-tabs-bar {
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+    background: #fff; border: 1.5px solid #E4E9E5;
+    border-radius: 12px; padding: 6px;
+  }
+  .al-tab {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 7px 16px; border-radius: 8px;
+    font-size: 13px; font-weight: 600; color: #71807B;
+    text-decoration: none;
+    transition: background .17s, color .17s, box-shadow .17s;
+    white-space: nowrap;
+  }
+  .al-tab i { font-size: 12px; }
+  .al-tab:hover { background: #F0F5F3; color: #24302D; }
+  .al-tab.active {
+    background: #4F46E5; color: #fff;
+    box-shadow: 0 2px 10px rgba(79,70,229,.28);
+  }
+  .al-tab .al-tab-count {
+    font-size: 10px; font-weight: 700;
+    background: rgba(255,255,255,.22); color: inherit;
+    padding: 1px 6px; border-radius: 20px;
+  }
+  .al-tab.active .al-tab-count { background: rgba(255,255,255,.25); }
+  .al-tab:not(.active) .al-tab-count { background: #F0F5F3; color: #4F46E5; }
+
+  /* ─── KPI row ────────────────────────────────────────────────────── */
+  .al-kpi-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media(max-width: 680px) { .al-kpi-row { grid-template-columns: 1fr; } }
+
+  .al-kpi {
+    background: #fff; border: 1.5px solid #E4E9E5; border-radius: 14px;
+    padding: 18px 20px; display: flex; align-items: center; gap: 16px;
+    transition: box-shadow .18s, border-color .18s;
+  }
+  .al-kpi:hover { box-shadow: 0 4px 18px rgba(79,70,229,.10); border-color: #B8D4CC; }
+
+  .al-kpi-icon {
+    width: 46px; height: 46px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .al-kpi-icon.teal  { background: rgba(79,70,229,.12);  color: #4F46E5; }
+  .al-kpi-icon.sage  { background: rgba(14,165,233,.12); color: #0EA5E9; }
+  .al-kpi-icon.lav   { background: rgba(155,138,251,.12); color: #9B8AFB; }
+
+  .al-kpi-body { min-width: 0; }
+  .al-kpi-body .al-kpi-val {
+    font-size: 22px; font-weight: 800; color: #24302D; line-height: 1.1;
+  }
+  .al-kpi-body .al-kpi-lbl {
+    font-size: 11px; font-weight: 700; letter-spacing: .08em;
+    text-transform: uppercase; color: #71807B; margin-top: 2px;
+  }
+
+  /* ─── Timeline container ─────────────────────────────────────────── */
+  .al-panel {
+    background: #fff; border: 1.5px solid #E4E9E5; border-radius: 16px; overflow: hidden;
+  }
+  .al-panel-header {
+    padding: 20px 24px; border-bottom: 1.5px solid #E4E9E5;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .al-panel-header h3 { font-size: 16px; font-weight: 700; color: #24302D; margin: 0; }
+  .al-panel-header .al-result-count {
+    font-size: 12px; color: #71807B; font-weight: 600;
+  }
+
+  /* ─── Date separator ─────────────────────────────────────────────── */
+  .al-date-sep {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 24px 4px;
+  }
+  .al-date-sep span {
+    font-size: 11px; font-weight: 700; letter-spacing: .09em;
+    text-transform: uppercase; color: #71807B; white-space: nowrap;
+  }
+  .al-date-sep::before, .al-date-sep::after {
+    content: ''; flex: 1; height: 1px; background: #E4E9E5;
+  }
+
+  /* ─── Activity item ──────────────────────────────────────────────── */
+  .al-list { list-style: none; margin: 0; padding: 0; }
+
+  .al-item {
+    display: flex; align-items: flex-start; gap: 14px;
+    padding: 16px 24px;
+    border-bottom: 1px solid #F0F4F2;
+    transition: background .15s;
+    position: relative;
+  }
+  .al-item:last-child { border-bottom: none; }
+  .al-item:hover { background: #FAFCFB; }
+
+  /* timeline spine */
+  .al-item::before {
+    content: '';
+    position: absolute; left: 43px; top: 50px;
+    width: 2px; bottom: -1px;
+    background: linear-gradient(to bottom, #E4E9E5 60%, transparent);
+    pointer-events: none;
+  }
+  .al-list li:last-child.al-item::before { display: none; }
+
+  /* icon */
+  .al-icon {
+    width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; position: relative; z-index: 1;
+  }
+  .al-icon.type-students    { background: rgba(79,70,229,.13);  color: #4F46E5; }
+  .al-icon.type-recruiters  { background: rgba(14,165,233,.15); color: #6B9977; }
+  .al-icon.type-companies   { background: rgba(155,138,251,.13); color: #9B8AFB; }
+  .al-icon.type-jobs        { background: rgba(184,224,210,.30); color: #3D8C72; }
+  .al-icon.type-applications{ background: rgba(214,168,95,.13);  color: #C0872A; }
+  .al-icon.type-default     { background: #F0F5F3; color: #71807B; }
+
+  /* body */
+  .al-body { flex: 1; min-width: 0; }
+  .al-body-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 3px; }
+  .al-actor { font-size: 14px; font-weight: 700; color: #24302D; }
+  .al-action { font-size: 13.5px; color: #71807B; }
+  .al-target {
+    display: inline-block; font-size: 12px; font-weight: 600;
+    color: #4F46E5; background: rgba(79,70,229,.09);
+    padding: 2px 9px; border-radius: 20px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px;
+  }
+
+  /* meta row */
+  .al-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+  .al-time { font-size: 11.5px; color: #A0B0AB; display: flex; align-items: center; gap: 4px; }
+  .al-time i { font-size: 10px; }
+
+  /* status badge */
+  .al-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 10.5px; font-weight: 700; letter-spacing: .04em;
+    padding: 2px 9px; border-radius: 20px; text-transform: uppercase;
+  }
+  .al-badge::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: .7; }
+  .al-badge.success { background: rgba(111,167,118,.13); color: #4A8F54; }
+  .al-badge.warning { background: rgba(214,168,95,.13);  color: #A87025; }
+  .al-badge.danger  { background: rgba(212,119,119,.13); color: #B85050; }
+  .al-badge.info    { background: rgba(155,138,251,.13); color: #7060D8; }
+  .al-badge.neutral { background: #F0F5F3; color: #71807B; }
+
+  /* type chip */
+  .al-type-chip {
+    font-size: 10px; font-weight: 700; letter-spacing: .06em;
+    text-transform: uppercase; padding: 2px 7px; border-radius: 5px;
+  }
+  .al-type-chip.students    { background: rgba(79,70,229,.10);  color: #4F46E5; }
+  .al-type-chip.recruiters  { background: rgba(14,165,233,.15); color: #5C8A68; }
+  .al-type-chip.companies   { background: rgba(155,138,251,.12); color: #9B8AFB; }
+  .al-type-chip.jobs        { background: rgba(184,224,210,.35); color: #2E7A5F; }
+  .al-type-chip.applications{ background: rgba(214,168,95,.14);  color: #A87025; }
+
+  /* ─── Empty state ────────────────────────────────────────────────── */
+  .al-empty {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 72px 32px; gap: 16px; text-align: center;
+  }
+  .al-empty-icon {
+    width: 80px; height: 80px; border-radius: 20px;
+    background: #F0F5F3; display: flex; align-items: center; justify-content: center;
+    font-size: 32px; color: #0EA5E9;
+  }
+  .al-empty h4 { font-size: 17px; font-weight: 700; color: #24302D; margin: 0; }
+  .al-empty p { font-size: 13.5px; color: #71807B; margin: 0; max-width: 320px; line-height: 1.6; }
+  .al-empty-link {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 9px 20px; border-radius: 8px;
+    background: #4F46E5; color: #fff; font-size: 13px; font-weight: 600;
+    text-decoration: none; transition: background .18s, box-shadow .18s;
+  }
+  .al-empty-link:hover { background: #3E6058; box-shadow: 0 4px 14px rgba(79,70,229,.28); }
+
+  /* ─── Pagination / footer ────────────────────────────────────────── */
+  .al-footer {
+    padding: 18px 24px; border-top: 1.5px solid #E4E9E5;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+  }
+  .al-footer-info { font-size: 12.5px; color: #71807B; }
+  .al-pager { display: flex; align-items: center; gap: 6px; }
+  .al-pager a, .al-pager span {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 34px; height: 34px; border-radius: 8px;
+    font-size: 13px; font-weight: 600; text-decoration: none;
+    border: 1.5px solid #E4E9E5; color: #4F46E5;
+    transition: background .16s, border-color .16s, color .16s;
+  }
+  .al-pager a:hover { background: #F0F5F3; border-color: #0EA5E9; }
+  .al-pager span.current { background: #4F46E5; border-color: #4F46E5; color: #fff; }
+  .al-pager span.disabled { color: #C4CFCB; cursor: default; pointer-events: none; }
+  .al-no-more {
+    width: 100%; text-align: center; padding: 20px;
+    font-size: 13px; color: #A0B0AB;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+</style>
+
+<div class="al-page">
+
+  {# ── Heading ──────────────────────────────────────────────────────── #}
+  <div class="al-heading">
+    <div class="al-heading-left">
+      <p class="al-label"><i class="fa-solid fa-wave-square"></i>&nbsp; Operational audit</p>
+      <h2>Activity <span>Log</span></h2>
+    </div>
+    <a href="?type={{ filter_type }}" class="al-refresh-btn">
+      <i class="fa-solid fa-rotate-right"></i> Refresh
+    </a>
+  </div>
+
+  {# ── Filter Tabs ───────────────────────────────────────────────────── #}
+  <nav class="al-tabs-bar" aria-label="Filter activities">
+    <a href="?" class="al-tab {% if not filter_type %}active{% endif %}">
+      <i class="fa-solid fa-layer-group"></i> All
+      <span class="al-tab-count">{{ activities|length }}</span>
+    </a>
+    <a href="?type=students" class="al-tab {% if filter_type == 'students' %}active{% endif %}">
+      <i class="fa-solid fa-user-graduate"></i> Students
+    </a>
+    <a href="?type=recruiters" class="al-tab {% if filter_type == 'recruiters' %}active{% endif %}">
+      <i class="fa-solid fa-user-tie"></i> Recruiters
+    </a>
+    <a href="?type=companies" class="al-tab {% if filter_type == 'companies' %}active{% endif %}">
+      <i class="fa-solid fa-building"></i> Companies
+    </a>
+    <a href="?type=jobs" class="al-tab {% if filter_type == 'jobs' %}active{% endif %}">
+      <i class="fa-solid fa-briefcase"></i> Jobs
+    </a>
+    <a href="?type=applications" class="al-tab {% if filter_type == 'applications' %}active{% endif %}">
+      <i class="fa-solid fa-file-lines"></i> Applications
+    </a>
+  </nav>
+
+  {# ── KPI row ───────────────────────────────────────────────────────── #}
+  {% with total=activities|length %}
+  <div class="al-kpi-row">
+
+    {# 1 — Total events #}
+    <div class="al-kpi">
+      <div class="al-kpi-icon teal"><i class="fa-solid fa-list-check"></i></div>
+      <div class="al-kpi-body">
+        <div class="al-kpi-val">{{ total }}</div>
+        <div class="al-kpi-lbl">Total Events</div>
+      </div>
+    </div>
+
+    {# 2 — Most-active type (counted in JS; static fallback from filter_type) #}
+    <div class="al-kpi">
+      <div class="al-kpi-icon sage"><i class="fa-solid fa-fire-flame-curved"></i></div>
+      <div class="al-kpi-body">
+        <div class="al-kpi-val" id="kpi-top-type">
+          {% if filter_type %}{{ filter_type|capfirst }}{% else %}—{% endif %}
+        </div>
+        <div class="al-kpi-lbl">Most Active Type</div>
+      </div>
+    </div>
+
+    {# 3 — Latest event time #}
+    <div class="al-kpi">
+      <div class="al-kpi-icon lav"><i class="fa-solid fa-clock-rotate-left"></i></div>
+      <div class="al-kpi-body">
+        <div class="al-kpi-val" style="font-size:16px;" id="kpi-latest">
+          {% if activities %}{{ activities.0.timestamp|date:"d M, H:i" }}{% else %}N/A{% endif %}
+        </div>
+        <div class="al-kpi-lbl">Latest Event</div>
+      </div>
+    </div>
+
+  </div>
+  {% endwith %}
+
+  {# ── Timeline panel ────────────────────────────────────────────────── #}
+  <div class="al-panel">
+    <div class="al-panel-header">
+      <h3>
+        <i class="fa-solid fa-timeline" style="color:#4F46E5;margin-right:8px;"></i>
+        {% if filter_type %}{{ filter_type|capfirst }} Activity{% else %}All Activity{% endif %}
+      </h3>
+      <span class="al-result-count">
+        {{ activities|length }} record{% if activities|length != 1 %}s{% endif %}
+      </span>
+    </div>
+
+    {% if activities %}
+      <ul class="al-list" id="al-list">
+
+        {% for activity in activities %}
+
+          {# ── Date separator (JS handles dynamic grouping; Django emits data attr) #}
+          <li class="al-date-sep" data-date="{{ activity.timestamp|date:'Y-m-d' }}"
+              id="sep-{{ activity.timestamp|date:'Ymd' }}" style="display:none;">
+            <span>{{ activity.timestamp|date:"l, d F Y" }}</span>
+          </li>
+
+          {# ── Activity row #}
+          <li class="al-item"
+              data-type="{{ activity.type }}"
+              data-date="{{ activity.timestamp|date:'Y-m-d' }}">
+
+            {# icon #}
+            <div class="al-icon type-{{ activity.type|default:'default' }}">
+              <i class="fa-solid fa-{{ activity.icon|default:'circle-dot' }}"></i>
+            </div>
+
+            {# body #}
+            <div class="al-body">
+              <div class="al-body-top">
+                <span class="al-actor">{{ activity.actor_name }}</span>
+                <span class="al-action">{{ activity.action }}</span>
+                {% if activity.target %}
+                  <span class="al-target" title="{{ activity.target }}">{{ activity.target }}</span>
+                {% endif %}
+              </div>
+              <div class="al-meta">
+                <span class="al-time">
+                  <i class="fa-regular fa-clock"></i>
+                  {{ activity.timestamp|date:"d M Y, H:i" }}
+                </span>
+
+                {# type chip #}
+                {% if activity.type %}
+                  <span class="al-type-chip {{ activity.type }}">{{ activity.type }}</span>
+                {% endif %}
+
+                {# status badge #}
+                {% if activity.status %}
+                  {% with s=activity.status|lower %}
+                    {% if s == 'success' or s == 'approved' or s == 'active' %}
+                      <span class="al-badge success"><span>{{ activity.status }}</span></span>
+                    {% elif s == 'pending' or s == 'review' or s == 'warning' %}
+                      <span class="al-badge warning"><span>{{ activity.status }}</span></span>
+                    {% elif s == 'rejected' or s == 'failed' or s == 'danger' or s == 'blocked' %}
+                      <span class="al-badge danger"><span>{{ activity.status }}</span></span>
+                    {% elif s == 'info' or s == 'new' or s == 'updated' %}
+                      <span class="al-badge info"><span>{{ activity.status }}</span></span>
+                    {% else %}
+                      <span class="al-badge neutral"><span>{{ activity.status }}</span></span>
+                    {% endif %}
+                  {% endwith %}
+                {% endif %}
+              </div>
+            </div>
+
+          </li>
+
+        {% endfor %}
+
+      </ul>
+
+      {# ── Footer / pagination ─────────────────────────────────────────── #}
+      <div class="al-footer">
+        <span class="al-footer-info">
+          Showing <strong>{{ activities|length }}</strong>
+          event{% if activities|length != 1 %}s{% endif %}
+          {% if filter_type %} &nbsp;·&nbsp; filtered by <strong>{{ filter_type|capfirst }}</strong>{% endif %}
+        </span>
+
+        {# Pagination — rendered if the view passes a page_obj #}
+        {% if page_obj %}
+          <div class="al-pager">
+            {% if page_obj.has_previous %}
+              <a href="?type={{ filter_type }}&page={{ page_obj.previous_page_number }}"
+                 title="Previous"><i class="fa-solid fa-chevron-left"></i></a>
+            {% else %}
+              <span class="disabled"><i class="fa-solid fa-chevron-left"></i></span>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+              {% if num == page_obj.number %}
+                <span class="current">{{ num }}</span>
+              {% elif num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+                <a href="?type={{ filter_type }}&page={{ num }}">{{ num }}</a>
+              {% elif num == 1 or num == page_obj.paginator.num_pages %}
+                <a href="?type={{ filter_type }}&page={{ num }}">{{ num }}</a>
+              {% elif num == page_obj.number|add:"-3" or num == page_obj.number|add:"3" %}
+                <span style="border:none;color:#A0B0AB;width:auto;padding:0 2px;">…</span>
+              {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+              <a href="?type={{ filter_type }}&page={{ page_obj.next_page_number }}"
+                 title="Next"><i class="fa-solid fa-chevron-right"></i></a>
+            {% else %}
+              <span class="disabled"><i class="fa-solid fa-chevron-right"></i></span>
+            {% endif %}
+          </div>
+
+          {% if not page_obj.has_next %}
+            <div class="al-no-more" style="border-top:1.5px solid #E4E9E5;">
+              <i class="fa-solid fa-circle-check" style="color:#6FA776;"></i>
+              You've reached the end of the activity log.
+            </div>
+          {% endif %}
+
+        {% else %}
+          {# No paginator — show simple "end" message #}
+          <div class="al-no-more" style="border:none;padding:0;">
+            <i class="fa-solid fa-circle-check" style="color:#6FA776;"></i>
+            All records displayed
+          </div>
+        {% endif %}
+      </div>
+
+    {% else %}
+      {# ── Empty state ─────────────────────────────────────────────────── #}
+      <div class="al-empty">
+        <div class="al-empty-icon"><i class="fa-solid fa-inbox"></i></div>
+        <h4>No activity found</h4>
+        <p>
+          {% if filter_type %}
+            There is no recorded activity for <strong>{{ filter_type|capfirst }}</strong> yet.
+            Try selecting a different filter or check back later.
+          {% else %}
+            No activity has been recorded yet. Events will appear here as users
+            interact with the platform.
+          {% endif %}
+        </p>
+        {% if filter_type %}
+          <a href="?" class="al-empty-link">
+            <i class="fa-solid fa-layer-group"></i> View all activity
+          </a>
+        {% endif %}
+      </div>
+    {% endif %}
+
+  </div>{# /.al-panel #}
+
+</div>{# /.al-page #}
+
+{# ── JavaScript: date separators + KPI most-active type ───────────────── #}
+<script>
+(function () {
+  /* ── 1. Insert date separators between items whose date changes ─── */
+  const list   = document.getElementById('al-list');
+  if (!list) return;
+
+  const items  = list.querySelectorAll('li.al-item');
+  let lastDate = null;
+
+  items.forEach(function (item) {
+    const d = item.getAttribute('data-date');
+    if (d && d !== lastDate) {
+      /* show the pre-rendered separator for this date */
+      const sep = document.getElementById('sep-' + d.replace(/-/g, ''));
+      if (sep) {
+        /* move separator to just before this item */
+        list.insertBefore(sep, item);
+        sep.style.display = 'flex';
+      }
+      lastDate = d;
+    }
+  });
+
+  /* ── 2. Calculate most-active type and update KPI card ─────────── */
+  const counts = {};
+  items.forEach(function (item) {
+    const t = item.getAttribute('data-type');
+    if (t) counts[t] = (counts[t] || 0) + 1;
+  });
+
+  const kpiEl = document.getElementById('kpi-top-type');
+  if (kpiEl && Object.keys(counts).length > 0) {
+    const topType = Object.keys(counts).reduce(function (a, b) {
+      return counts[a] >= counts[b] ? a : b;
+    });
+    const cap = topType.charAt(0).toUpperCase() + topType.slice(1);
+    kpiEl.textContent = cap + ' (' + counts[topType] + ')';
+  }
+})();
+</script>
+
+{% endblock %}
+

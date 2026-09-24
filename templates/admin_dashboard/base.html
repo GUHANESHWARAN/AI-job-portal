@@ -1,0 +1,103 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ page_title|default:'Admin Dashboard' }} | AI Recruitment Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="{% static 'css/admin.css' %}">
+</head>
+<body class="admin-body">
+  <div class="admin-shell">
+    <aside class="admin-sidebar" id="adminSidebar">
+      <div class="brand-box">
+        <div class="brand-mark">AI</div>
+        <div>
+          <strong>AI Recruitment</strong>
+          <span>Admin Center</span>
+        </div>
+      </div>
+
+      <nav class="admin-nav" aria-label="Admin navigation">
+        <a href="{% url 'admin_dashboard' %}" class="nav-link {% if request.path == '/admin-dashboard/' %}active{% endif %}"><i class="fa-solid fa-gauge-high"></i><span>Dashboard</span></a>
+        <a href="{% url 'admin_students' %}" class="nav-link {% if '/students/' in request.path %}active{% endif %}"><i class="fa-solid fa-user-graduate"></i><span>Students</span></a>
+        <a href="{% url 'admin_recruiters' %}" class="nav-link {% if '/recruiters/' in request.path %}active{% endif %}"><i class="fa-solid fa-user-tie"></i><span>Recruiters</span></a>
+        <a href="{% url 'admin_companies' %}" class="nav-link {% if '/companies/' in request.path %}active{% endif %}"><i class="fa-solid fa-building"></i><span>Companies</span></a>
+        <a href="{% url 'admin_jobs' %}" class="nav-link {% if '/jobs/' in request.path and '/internships/' not in request.path %}active{% endif %}"><i class="fa-solid fa-briefcase"></i><span>Jobs</span></a>
+        <a href="{% url 'admin_internships' %}" class="nav-link {% if '/internships/' in request.path %}active{% endif %}"><i class="fa-solid fa-graduation-cap"></i><span>Internships</span></a>
+        <a href="{% url 'admin_applications' %}" class="nav-link {% if '/applications/' in request.path %}active{% endif %}"><i class="fa-solid fa-file-lines"></i><span>Applications</span></a>
+        <a href="{% url 'admin_ai_insights' %}" class="nav-link {% if '/ai-insights/' in request.path %}active{% endif %}"><i class="fa-solid fa-brain"></i><span>AI Insights</span></a>
+        <a href="{% url 'admin_analytics' %}" class="nav-link {% if '/analytics/' in request.path %}active{% endif %}"><i class="fa-solid fa-chart-pie"></i><span>Analytics</span></a>
+        <a href="{% url 'admin_reports' %}" class="nav-link {% if '/reports/' in request.path %}active{% endif %}"><i class="fa-solid fa-file-export"></i><span>Reports</span></a>
+        <a href="{% url 'admin_activity_logs' %}" class="nav-link {% if '/activity-logs/' in request.path %}active{% endif %}"><i class="fa-solid fa-clock-rotate-left"></i><span>Activity Logs</span></a>
+        <a href="{% url 'admin_settings' %}" class="nav-link {% if '/settings/' in request.path %}active{% endif %}"><i class="fa-solid fa-gear"></i><span>Settings</span></a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <a href="{% url 'logout' %}" class="nav-link danger"><i class="fa-solid fa-right-from-bracket"></i><span>Logout</span></a>
+      </div>
+    </aside>
+
+    <div class="admin-main">
+      <header class="admin-header">
+        <div class="header-left">
+          <button class="sidebar-toggle" id="sidebarToggle" type="button" aria-label="Toggle sidebar">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+          <div>
+            <p class="eyebrow">AI Recruitment Platform</p>
+            <h1>{{ page_title|default:'Dashboard' }}</h1>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <label class="header-search" aria-label="Search the platform">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" placeholder="Search" aria-label="Search" />
+          </label>
+
+          <button class="icon-button" type="button" aria-label="Notifications">
+            <i class="fa-solid fa-bell"></i>
+          </button>
+
+          <div class="profile-menu">
+            <button class="profile-trigger" type="button" aria-label="Profile menu">
+              <span class="avatar">{{ user.first_name|first|default:'A' }}</span>
+              <span>{{ user.get_full_name|default:user.username }}</span>
+              <i class="fa-solid fa-chevron-down"></i>
+            </button>
+            <div class="profile-dropdown">
+              <a href="{% url 'home' %}"><i class="fa-solid fa-house"></i> View Portal</a>
+              <a href="{% url 'admin_settings' %}"><i class="fa-solid fa-gear"></i> Settings</a>
+              <a href="{% url 'logout' %}"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="admin-content">
+        {% if messages %}
+          <div class="admin-messages">
+            {% for message in messages %}
+              <div class="alert alert-{{ message.tags|default:'info' }}">
+                <i class="fa-solid {% if message.tags == 'success' %}fa-circle-check{% elif message.tags == 'error' %}fa-circle-exclamation{% else %}fa-circle-info{% endif %}"></i>
+                <span>{{ message }}</span>
+                <button type="button" class="alert-close" onclick="this.parentElement.remove()">&times;</button>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+
+  <script src="{% static 'js/admin.js' %}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>
+

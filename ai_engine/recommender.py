@@ -91,3 +91,4 @@ def get_ranked_candidates_for_job(job: Any, limit: int = 20) -> List[Dict[str, A
 
     ranked.sort(key=lambda x: x['match']['overall_score'], reverse=True)
     return ranked[:limit]
+

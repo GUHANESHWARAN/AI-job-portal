@@ -15,3 +15,4 @@ class CompanyForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'class': 'form-textarea', 'rows': 4, 'placeholder': 'About the company...'}),
             'logo': forms.FileInput(attrs={'class': 'form-file-input', 'accept': 'image/*'}),
         }
+

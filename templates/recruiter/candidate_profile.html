@@ -138,12 +138,13 @@
           </div>
 
           <div style="display: flex; gap: 0.75rem; align-items: center;">
+            {% csrf_token %}
             <select id="stage-updater" class="form-select" style="width: auto; font-weight: 600;">
               {% for val, label in status_choices %}
                 <option value="{{ val }}" {% if application.status == val %}selected{% endif %}>{{ label }}</option>
               {% endfor %}
             </select>
-            <button type="button" class="btn btn-primary btn-sm" onclick="saveStatus()">Update Status</button>
+            <button type="button" id="update-status-btn" class="btn btn-primary btn-sm" onclick="saveStatus()">Update Status</button>
           </div>
         </div>
       {% endif %}
@@ -209,26 +210,62 @@
 <script>
   function saveStatus() {
     const stageSelect = document.getElementById('stage-updater');
+    const updateBtn = document.getElementById('update-status-btn');
+    if (!stageSelect) return;
+
     const newStatus = stageSelect.value;
-    
+    const csrfToken = getCookie('csrftoken') ||
+                      document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
+                      '{{ csrf_token }}';
+
+    if (updateBtn) {
+      updateBtn.disabled = true;
+      updateBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Updating...';
+    }
+
     fetch('/recruiter/api/applications/{{ application.id }}/status/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-CSRFToken': getCookie('csrftoken')
+        'X-CSRFToken': csrfToken
       },
       body: JSON.stringify({ status: newStatus })
     })
-    .then(res => res.json())
+    .then(async res => {
+      const isJson = res.headers.get('content-type')?.includes('application/json');
+      const data = isJson ? await res.json() : null;
+
+      if (!res.ok) {
+        const errorMsg = data?.error || (res.status === 403 ? 'CSRF verification failed or unauthorized.' : `Server error (HTTP ${res.status})`);
+        throw new Error(errorMsg);
+      }
+      return data;
+    })
     .then(data => {
-      if (data.success) {
-        alert('Application stage successfully updated to ' + data.status_display);
+      if (data && data.success) {
+        if (data.status_changed === false) {
+          alert('Application status is already set to "' + data.status_display + '".\nNo changes were made and no duplicate email was sent.');
+        } else if (data.email_sent) {
+          alert('Application status updated successfully to "' + data.status_display + '".\nStudent notification email sent to ' + (data.student_email || 'candidate') + '.');
+        } else {
+          alert('Application status updated successfully to "' + data.status_display + '",\nbut the notification email could not be sent.');
+        }
       } else {
-        alert('Error: ' + data.error);
+        alert('Error: ' + (data?.error || 'Unable to update status.'));
       }
     })
-    .catch(err => alert('Request failed: ' + err));
+    .catch(err => {
+      console.error('saveStatus error:', err);
+      alert('Request failed: ' + err.message);
+    })
+    .finally(() => {
+      if (updateBtn) {
+        updateBtn.disabled = false;
+        updateBtn.innerHTML = 'Update Status';
+      }
+    });
   }
 </script>
 {% endif %}
 {% endblock %}
+

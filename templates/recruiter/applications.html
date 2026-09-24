@@ -16,6 +16,7 @@
 
   <!-- Filters -->
   <div class="card" style="margin-bottom: 2rem;">
+    {% csrf_token %}
     <form method="GET">
       <div style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 1rem; align-items: flex-end;">
         <div class="form-group" style="margin-bottom: 0;">
@@ -139,3 +140,4 @@
 {% block extra_js %}
 <script src="{% static 'js/recruiter.js' %}"></script>
 {% endblock %}
+

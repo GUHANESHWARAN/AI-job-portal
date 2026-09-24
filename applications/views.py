@@ -58,6 +58,10 @@ def apply_job_view(request, job_id):
             status=Application.STATUS_APPLIED
         )
 
+        # Send application submission confirmation email
+        from applications.notifications import send_application_notification
+        send_application_notification(app, old_status='', new_status=Application.STATUS_APPLIED)
+
         messages.success(
             request,
             f"Successfully applied to {job.title}! Your AI match score is {app.overall_match_score:.1f}%."

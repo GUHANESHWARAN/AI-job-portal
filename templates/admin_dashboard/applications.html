@@ -1,0 +1,154 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block content %}
+  <section class="page-toolbar">
+    <form method="get" class="toolbar-form">
+      <div class="search-input-group">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="search" name="q" value="{{ query }}" placeholder="Search by candidate name, job title, or company" />
+      </div>
+      <div class="filter-group">
+        <select name="company_id" onchange="this.form.submit()">
+          <option value="">All Companies</option>
+          {% for c in companies %}
+            <option value="{{ c.id }}" {% if company_id == c.id|stringformat:'s' %}selected{% endif %}>{{ c.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="filter-group">
+        <select name="status" onchange="this.form.submit()">
+          <option value="">All Statuses</option>
+          {% for val, label in status_choices %}
+            <option value="{{ val }}" {% if status == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="filter-group">
+        <select name="match_score" onchange="this.form.submit()">
+          <option value="">All Match Scores</option>
+          <option value="90" {% if match_score == '90' %}selected{% endif %}>90%+ Match (Exceptional)</option>
+          <option value="80" {% if match_score == '80' %}selected{% endif %}>80% - 89% Match (Strong)</option>
+          <option value="70" {% if match_score == '70' %}selected{% endif %}>70% - 79% Match (Moderate)</option>
+          <option value="below70" {% if match_score == 'below70' %}selected{% endif %}>&lt; 70% Match</option>
+        </select>
+      </div>
+      <button type="submit" class="primary-button"><i class="fa-solid fa-filter"></i> Filter</button>
+      {% if query or company_id or status or match_score %}
+        <a href="{% url 'admin_applications' %}" class="secondary-button"><i class="fa-solid fa-rotate-left"></i> Reset</a>
+      {% endif %}
+    </form>
+    <div class="toolbar-count">
+      <span>Total: <strong>{{ total_count }}</strong></span>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <div>
+        <p class="panel-label">Platform Submissions</p>
+        <h3>Candidate Applications & Pipeline</h3>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Candidate</th>
+            <th>Target Opportunity</th>
+            <th>Company</th>
+            <th>AI Match Compatibility</th>
+            <th>Applied Date</th>
+            <th>Status</th>
+            <th style="text-align: right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for application in applications %}
+            <tr>
+              <td>
+                <div class="table-user">
+                  <span class="avatar small">{{ application.student.first_name|first|default:'S' }}</span>
+                  <div>
+                    <strong>{{ application.student.get_full_name|default:application.student.username }}</strong>
+                    <small>{{ application.student.email }}</small>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <a href="{% url 'job_detail' application.job.id %}" target="_blank" class="table-link">
+                  <strong>{{ application.job.title }}</strong>
+                </a>
+                <small style="display: block; color: var(--muted);">{{ application.job.get_job_type_display }}</small>
+              </td>
+              <td>
+                {% if application.job.company %}
+                  <a href="{% url 'admin_company_detail' application.job.company.id %}" class="table-link">
+                    {{ application.job.company.name }}
+                  </a>
+                {% else %}
+                  <span class="muted-text">Independent</span>
+                {% endif %}
+              </td>
+              <td>
+                <div class="score-indicator-cell">
+                  <span class="match-pill {% if application.overall_match_score >= 80 %}high{% elif application.overall_match_score >= 60 %}medium{% else %}low{% endif %}">
+                    {{ application.overall_match_score|floatformat:0 }}%
+                  </span>
+                  <div class="mini-progress-bar">
+                    <span class="progress-fill" style="width: {{ application.overall_match_score }}%;"></span>
+                  </div>
+                </div>
+              </td>
+              <td>{{ application.applied_at|date:'d M Y, H:i' }}</td>
+              <td>
+                <span class="badge badge-soft {{ application.status }}">{{ application.get_status_display }}</span>
+              </td>
+              <td style="text-align: right;">
+                <div class="action-buttons">
+                  <a class="table-action" href="{% url 'admin_student_detail' application.student.id %}">
+                    <i class="fa-solid fa-user"></i> Candidate
+                  </a>
+                  <a class="table-action" href="{% url 'job_detail' application.job.id %}" target="_blank">
+                    <i class="fa-solid fa-briefcase"></i> Job
+                  </a>
+                </div>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="7" class="empty-cell">
+                <div class="empty-state">
+                  <i class="fa-solid fa-file-lines"></i>
+                  <h4>No applications found</h4>
+                  <p>Try modifying your search query or match score filter.</p>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if page_obj.has_other_pages %}
+      <div class="pagination-bar">
+        <span class="pagination-info">Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        <div class="pagination-nav">
+          {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if company_id %}&company_id={{ company_id }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if match_score %}&match_score={{ match_score }}{% endif %}" class="page-link">&laquo; Prev</a>
+          {% endif %}
+          <span class="page-current">{{ page_obj.number }}</span>
+          {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if company_id %}&company_id={{ company_id }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if match_score %}&match_score={{ match_score }}{% endif %}" class="page-link">Next &raquo;</a>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="panel-disclaimer">
+      <i class="fa-solid fa-circle-info"></i>
+      <span>AI Match Score is calculated via multi-factor semantic matching as candidate-job compatibility decision-support, not an employment guarantee.</span>
+    </div>
+  </section>
+{% endblock %}
+

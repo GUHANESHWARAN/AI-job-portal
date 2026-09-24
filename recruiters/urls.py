@@ -12,3 +12,4 @@ urlpatterns = [
     path('candidates/<int:user_id>/', views.recruiter_candidate_profile_view, name='recruiter_candidate_profile'),
     path('api/applications/<int:application_id>/status/', views.update_application_status_api, name='api_update_app_status'),
 ]
+

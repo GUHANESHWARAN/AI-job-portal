@@ -128,3 +128,4 @@ def analyze_job_description(title: str, description: str) -> Dict[str, Any]:
         'education_requirements': edu_info,
         'ai_summary': summary
     }
+

@@ -1,130 +1,330 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Create Account - CareerAI{% endblock %}
+{% block title %}Create Account — CareerAI{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/auth.css' %}">
 {% endblock %}
 
 {% block content %}
-<div class="auth-wrapper">
-  <div class="auth-card" style="max-width: 540px;">
-    <div class="auth-header">
-      <div class="brand-icon" style="margin: 0 auto 1rem; width: 48px; height: 48px; font-size: 1.4rem;">
-        <i class="fa-solid fa-brain"></i>
+<div class="reg-shell">
+
+  <!-- ===== LEFT PANEL — brand story ===== -->
+  <aside class="reg-panel">
+    <div class="reg-panel-inner">
+      <a href="{% url 'home' %}" class="reg-logo">
+        <div class="reg-logo-icon"><i class="fa-solid fa-brain"></i></div>
+        <span>CareerAI</span>
+      </a>
+
+      <div class="reg-panel-copy">
+        <h1>Your career,<br><span class="reg-gradient-text">supercharged by AI.</span></h1>
+        <p>Join thousands of students and recruiters who use CareerAI to match smarter, move faster, and grow further.</p>
       </div>
-      <h2>Get Started with CareerAI</h2>
-      <p>Join the AI-powered intelligent talent portal</p>
+
+      <ul class="reg-feature-list">
+        <li>
+          <div class="reg-feat-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+          <div>
+            <strong>AI Resume Scoring</strong>
+            <span>Instant ATS-grade feedback on every upload</span>
+          </div>
+        </li>
+        <li>
+          <div class="reg-feat-icon"><i class="fa-solid fa-bullseye"></i></div>
+          <div>
+            <strong>Semantic Job Matching</strong>
+            <span>TF-IDF powered relevance across thousands of roles</span>
+          </div>
+        </li>
+        <li>
+          <div class="reg-feat-icon"><i class="fa-solid fa-route"></i></div>
+          <div>
+            <strong>Skill Gap Roadmaps</strong>
+            <span>Know exactly what to learn next</span>
+          </div>
+        </li>
+      </ul>
+
+      <div class="reg-panel-badge">
+        <i class="fa-solid fa-shield-halved"></i>
+        <span>Your data is encrypted &amp; never shared</span>
+      </div>
     </div>
+  </aside>
 
-    <!-- Role Selection Tabs -->
-    <div class="role-selector-tabs">
-      <button type="button" class="role-tab active" id="tab-student" onclick="selectRole('student')">
-        <i class="fa-solid fa-user-graduate"></i> Student / Job Seeker
-      </button>
-      <button type="button" class="role-tab" id="tab-recruiter" onclick="selectRole('recruiter')">
-        <i class="fa-solid fa-building-user"></i> Recruiter / Employer
-      </button>
-    </div>
+  <!-- ===== RIGHT PANEL — form ===== -->
+  <main class="reg-form-area">
+    <div class="reg-form-card">
 
-    <form method="POST">
-      {% csrf_token %}
+      <!-- Header -->
+      <div class="reg-form-header">
+        <h2>Create your account</h2>
+        <p>Already have one? <a href="{% url 'login' %}">Sign in →</a></p>
+      </div>
 
+      <!-- Role Switcher -->
+      <div class="reg-role-switcher" role="group" aria-label="Choose your account type">
+        <button type="button" class="reg-role-btn active" id="tab-student" onclick="selectRole('student')">
+          <i class="fa-solid fa-user-graduate"></i>
+          <span>Student</span>
+          <small>Job Seeker</small>
+        </button>
+        <button type="button" class="reg-role-btn" id="tab-recruiter" onclick="selectRole('recruiter')">
+          <i class="fa-solid fa-building-user"></i>
+          <span>Recruiter</span>
+          <small>Employer</small>
+        </button>
+      </div>
+
+      <!-- Server-side form errors -->
       {% if form.non_field_errors %}
-        <div class="alert alert-danger">
-          {% for error in form.non_field_errors %}
-            <div>{{ error }}</div>
-          {% endfor %}
+        <div class="reg-alert reg-alert-error">
+          <i class="fa-solid fa-circle-exclamation"></i>
+          <div>
+            {% for error in form.non_field_errors %}
+              <p>{{ error }}</p>
+            {% endfor %}
+          </div>
         </div>
       {% endif %}
 
-      <div class="form-group" style="display: none;">
-        {{ form.role }}
-      </div>
+      <form method="POST" novalidate id="regForm" autocomplete="on">
+        {% csrf_token %}
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-        <div class="form-group">
-          <label class="form-label">First Name *</label>
-          {{ form.first_name }}
-          {% if form.first_name.errors %}<span style="color: var(--danger); font-size: 0.8rem;">{{ form.first_name.errors.0 }}</span>{% endif %}
+        <!-- Hidden role field -->
+        <div style="display:none">{{ form.role }}</div>
+
+        <!-- Name row -->
+        <div class="reg-row">
+          <div class="reg-field {% if form.first_name.errors %}has-error{% endif %}">
+            <label for="{{ form.first_name.id_for_label }}">First Name <span class="req">*</span></label>
+            <div class="reg-input-wrap">
+              <i class="fa-regular fa-user reg-input-icon"></i>
+              {{ form.first_name }}
+            </div>
+            {% if form.first_name.errors %}<p class="reg-error-msg">{{ form.first_name.errors.0 }}</p>{% endif %}
+          </div>
+          <div class="reg-field {% if form.last_name.errors %}has-error{% endif %}">
+            <label for="{{ form.last_name.id_for_label }}">Last Name <span class="req">*</span></label>
+            <div class="reg-input-wrap">
+              <i class="fa-regular fa-user reg-input-icon"></i>
+              {{ form.last_name }}
+            </div>
+            {% if form.last_name.errors %}<p class="reg-error-msg">{{ form.last_name.errors.0 }}</p>{% endif %}
+          </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Last Name *</label>
-          {{ form.last_name }}
-          {% if form.last_name.errors %}<span style="color: var(--danger); font-size: 0.8rem;">{{ form.last_name.errors.0 }}</span>{% endif %}
+
+        <!-- Email -->
+        <div class="reg-field {% if form.email.errors %}has-error{% endif %}" id="emailField">
+          <label for="{{ form.email.id_for_label }}">Email Address <span class="req">*</span></label>
+          <div class="reg-input-wrap">
+            <i class="fa-regular fa-envelope reg-input-icon"></i>
+            {{ form.email }}
+            <span class="reg-email-status" id="emailStatus" aria-live="polite"></span>
+          </div>
+          {% if form.email.errors %}
+            <p class="reg-error-msg" id="emailErrorMsg">{{ form.email.errors.0 }}</p>
+          {% else %}
+            <p class="reg-error-msg" id="emailErrorMsg" style="display:none"></p>
+          {% endif %}
+          <p class="reg-hint" id="emailHint">We'll use this to sign you in — no two accounts can share an email.</p>
         </div>
-      </div>
 
-      <div class="form-group">
-        <label class="form-label">Email Address *</label>
-        {{ form.email }}
-        {% if form.email.errors %}<span style="color: var(--danger); font-size: 0.8rem;">{{ form.email.errors.0 }}</span>{% endif %}
-      </div>
-
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-        <div class="form-group">
-          <label class="form-label">Username *</label>
-          {{ form.username }}
-          {% if form.username.errors %}<span style="color: var(--danger); font-size: 0.8rem;">{{ form.username.errors.0 }}</span>{% endif %}
+        <!-- Username + Phone row -->
+        <div class="reg-row">
+          <div class="reg-field {% if form.username.errors %}has-error{% endif %}">
+            <label for="{{ form.username.id_for_label }}">Username <span class="req">*</span></label>
+            <div class="reg-input-wrap">
+              <i class="fa-solid fa-at reg-input-icon"></i>
+              {{ form.username }}
+            </div>
+            {% if form.username.errors %}<p class="reg-error-msg">{{ form.username.errors.0 }}</p>{% endif %}
+          </div>
+          <div class="reg-field {% if form.phone.errors %}has-error{% endif %}">
+            <label for="{{ form.phone.id_for_label }}">Phone <span class="reg-optional">(optional)</span></label>
+            <div class="reg-input-wrap">
+              <i class="fa-solid fa-phone reg-input-icon"></i>
+              {{ form.phone }}
+            </div>
+            {% if form.phone.errors %}<p class="reg-error-msg">{{ form.phone.errors.0 }}</p>{% endif %}
+          </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Phone Number</label>
-          {{ form.phone }}
-          {% if form.phone.errors %}<span style="color: var(--danger); font-size: 0.8rem;">{{ form.phone.errors.0 }}</span>{% endif %}
+
+        <!-- Password -->
+        <div class="reg-field {% if form.password1.errors %}has-error{% endif %}">
+          <label for="{{ form.password1.id_for_label }}">Password <span class="req">*</span></label>
+          <div class="reg-input-wrap">
+            <i class="fa-solid fa-lock reg-input-icon"></i>
+            {{ form.password1 }}
+            <button type="button" class="reg-toggle-pw" onclick="togglePw('id_password1', this)" aria-label="Toggle password visibility">
+              <i class="fa-regular fa-eye"></i>
+            </button>
+          </div>
+          <div class="reg-pw-strength" id="pwStrength" aria-hidden="true">
+            <div class="reg-pw-bar" id="pwBar"></div>
+          </div>
+          {% if form.password1.errors %}<p class="reg-error-msg">{{ form.password1.errors.0 }}</p>{% endif %}
         </div>
-      </div>
 
-      <div class="form-group">
-        <label class="form-label">Password *</label>
-        {{ form.password_1 }}
-        {% if form.password_1.errors %}<span style="color: var(--danger); font-size: 0.8rem;">{{ form.password_1.errors.0 }}</span>{% endif %}
-      </div>
+        <!-- Confirm Password -->
+        <div class="reg-field {% if form.password2.errors %}has-error{% endif %}">
+          <label for="{{ form.password2.id_for_label }}">Confirm Password <span class="req">*</span></label>
+          <div class="reg-input-wrap">
+            <i class="fa-solid fa-lock reg-input-icon"></i>
+            {{ form.password2 }}
+            <button type="button" class="reg-toggle-pw" onclick="togglePw('id_password2', this)" aria-label="Toggle confirm password visibility">
+              <i class="fa-regular fa-eye"></i>
+            </button>
+          </div>
+          {% if form.password2.errors %}<p class="reg-error-msg">{{ form.password2.errors.0 }}</p>{% endif %}
+        </div>
 
-      <div class="form-group">
-        <label class="form-label">Confirm Password *</label>
-        {{ form.password_2 }}
-        {% if form.password_2.errors %}<span style="color: var(--danger); font-size: 0.8rem;">{{ form.password_2.errors.0 }}</span>{% endif %}
-      </div>
+        <!-- Terms checkbox -->
+        <label class="reg-terms-check">
+          <input type="checkbox" id="agreeTerms" required>
+          <span class="reg-check-box"></span>
+          <span>I agree to the <a href="#" tabindex="-1">Terms of Service</a> and <a href="#" tabindex="-1">Privacy Policy</a></span>
+        </label>
 
-      <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
-        <i class="fa-solid fa-user-plus"></i> Create Account
-      </button>
-    </form>
+        <!-- Submit -->
+        <button type="submit" class="reg-submit-btn" id="submitBtn">
+          <span id="submitLabel"><i class="fa-solid fa-user-plus"></i> Create Account</span>
+          <span id="submitLoading" style="display:none"><i class="fa-solid fa-circle-notch fa-spin"></i> Creating…</span>
+        </button>
+      </form>
 
-    <div class="auth-footer">
-      Already have an account? <a href="{% url 'login' %}" style="font-weight: 600;">Sign In here</a>
+      <p class="reg-divider-text">By signing up, CareerAI will never sell your personal data.</p>
     </div>
-  </div>
+  </main>
+
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-  function selectRole(role) {
-    const roleSelect = document.getElementById('id_role');
-    const tabStudent = document.getElementById('tab-student');
-    const tabRecruiter = document.getElementById('tab-recruiter');
+/* ── Role tab switcher ── */
+function selectRole(role) {
+  const roleSelect = document.getElementById('id_role');
+  const tabStudent  = document.getElementById('tab-student');
+  const tabRecruiter = document.getElementById('tab-recruiter');
+  if (roleSelect) roleSelect.value = role;
+  if (role === 'student') {
+    tabStudent.classList.add('active');
+    tabRecruiter.classList.remove('active');
+  } else {
+    tabRecruiter.classList.add('active');
+    tabStudent.classList.remove('active');
+  }
+}
 
-    if (roleSelect) {
-      roleSelect.value = role;
-    }
+/* ── Password show/hide ── */
+function togglePw(fieldId, btn) {
+  const input = document.getElementById(fieldId);
+  const icon  = btn.querySelector('i');
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.classList.replace('fa-eye', 'fa-eye-slash');
+  } else {
+    input.type = 'password';
+    icon.classList.replace('fa-eye-slash', 'fa-eye');
+  }
+}
 
-    if (role === 'student') {
-      tabStudent.classList.add('active');
-      tabRecruiter.classList.remove('active');
+/* ── Password strength meter ── */
+(function () {
+  const pw1 = document.getElementById('id_password1');
+  const bar = document.getElementById('pwBar');
+  if (!pw1 || !bar) return;
+
+  pw1.addEventListener('input', () => {
+    const v = pw1.value;
+    let score = 0;
+    if (v.length >= 8)  score++;
+    if (/[A-Z]/.test(v)) score++;
+    if (/[0-9]/.test(v)) score++;
+    if (/[^A-Za-z0-9]/.test(v)) score++;
+
+    bar.style.width = (score / 4 * 100) + '%';
+    bar.className = 'reg-pw-bar';
+    if (score <= 1) bar.classList.add('weak');
+    else if (score === 2) bar.classList.add('fair');
+    else if (score === 3) bar.classList.add('good');
+    else bar.classList.add('strong');
+  });
+})();
+
+/* ── Real-time email uniqueness check ── */
+(function () {
+  const emailInput = document.getElementById('id_email');
+  const statusEl   = document.getElementById('emailStatus');
+  const errorEl    = document.getElementById('emailErrorMsg');
+  const hintEl     = document.getElementById('emailHint');
+  if (!emailInput) return;
+
+  let debounceTimer;
+  const CHECK_URL = "{% url 'check_email' %}";
+
+  function setStatus(state, msg) {
+    // state: '' | 'checking' | 'ok' | 'taken'
+    statusEl.className = 'reg-email-status';
+    errorEl.style.display = 'none';
+    errorEl.textContent   = '';
+    hintEl.style.display  = 'block';
+
+    if (state === 'checking') {
+      statusEl.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
+      statusEl.classList.add('checking');
+    } else if (state === 'ok') {
+      statusEl.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+      statusEl.classList.add('ok');
+    } else if (state === 'taken') {
+      statusEl.innerHTML = '<i class="fa-solid fa-circle-xmark"></i>';
+      statusEl.classList.add('taken');
+      errorEl.textContent   = msg || 'This email is already registered.';
+      errorEl.style.display = 'block';
+      hintEl.style.display  = 'none';
     } else {
-      tabRecruiter.classList.add('active');
-      tabStudent.classList.remove('active');
+      statusEl.innerHTML = '';
     }
   }
 
-  // Set initial role from query parameter
-  document.addEventListener('DOMContentLoaded', () => {
-    const roleSelect = document.getElementById('id_role');
-    if (roleSelect && roleSelect.value === 'recruiter') {
-      selectRole('recruiter');
-    }
+  emailInput.addEventListener('input', () => {
+    clearTimeout(debounceTimer);
+    const val = emailInput.value.trim();
+    if (!val || !val.includes('@')) { setStatus(''); return; }
+
+    setStatus('checking');
+    debounceTimer = setTimeout(() => {
+      fetch(CHECK_URL + '?email=' + encodeURIComponent(val), {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.available) setStatus('ok');
+        else setStatus('taken', 'This email is already registered. Please sign in or use another.');
+      })
+      .catch(() => setStatus(''));
+    }, 600);
   });
+})();
+
+/* ── Submit: show loading spinner & block if email taken ── */
+document.getElementById('regForm').addEventListener('submit', function (e) {
+  const status = document.getElementById('emailStatus');
+  if (status && status.classList.contains('taken')) {
+    e.preventDefault();
+    return;
+  }
+  document.getElementById('submitLabel').style.display  = 'none';
+  document.getElementById('submitLoading').style.display = 'inline-flex';
+});
+
+/* ── Init role from query param ── */
+document.addEventListener('DOMContentLoaded', () => {
+  const roleSelect = document.getElementById('id_role');
+  if (roleSelect && roleSelect.value === 'recruiter') selectRole('recruiter');
+});
 </script>
 {% endblock %}

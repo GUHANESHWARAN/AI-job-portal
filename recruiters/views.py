@@ -3,6 +3,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 
 from .forms import RecruiterProfileForm
@@ -132,6 +133,7 @@ def recruiter_manage_jobs_view(request):
     return render(request, 'recruiter/manage_jobs.html', context)
 
 
+@ensure_csrf_cookie
 @login_required
 def recruiter_applications_view(request):
     if not hasattr(request.user, 'recruiter_profile'):
@@ -197,6 +199,7 @@ def recruiter_candidates_view(request):
     return render(request, 'recruiter/candidates.html', context)
 
 
+@ensure_csrf_cookie
 @login_required
 def recruiter_candidate_profile_view(request, user_id):
     """
@@ -215,20 +218,32 @@ def recruiter_candidate_profile_view(request, user_id):
     if job_id:
         try:
             job = Job.objects.get(pk=job_id, recruiter=request.user)
-            cand_skills = student_profile.get_skills_list()
-            resume_text = student_profile.parsed_resume_text or " ".join(cand_skills)
-            match_info = compute_job_match(
-                candidate_skills=cand_skills,
-                resume_text=resume_text,
-                job_required_skills=job.required_skills or [],
-                job_preferred_skills=job.preferred_skills or [],
-                job_description=f"{job.title} {job.description}",
-                job_exp_level=job.experience_level,
-                job_min_years=job.min_experience_years
-            )
-            application = Application.objects.filter(job=job, student=student_profile.user).first()
         except Job.DoesNotExist:
-            pass
+            job = None
+
+    # Fallback: If no job_id or job not found, look up an application to any of this recruiter's jobs
+    if not job:
+        application = Application.objects.filter(
+            job__recruiter=request.user,
+            student=student_profile.user
+        ).select_related('job').first()
+        if application:
+            job = application.job
+    else:
+        application = Application.objects.filter(job=job, student=student_profile.user).first()
+
+    if job:
+        cand_skills = student_profile.get_skills_list()
+        resume_text = student_profile.parsed_resume_text or " ".join(cand_skills)
+        match_info = compute_job_match(
+            candidate_skills=cand_skills,
+            resume_text=resume_text,
+            job_required_skills=job.required_skills or [],
+            job_preferred_skills=job.preferred_skills or [],
+            job_description=f"{job.title} {job.description}",
+            job_exp_level=job.experience_level,
+            job_min_years=job.min_experience_years
+        )
 
     context = {
         'student': student_profile,
@@ -245,6 +260,8 @@ def recruiter_candidate_profile_view(request, user_id):
 def update_application_status_api(request, application_id):
     """
     AJAX endpoint for recruiters to update applicant pipeline status and notes.
+    Triggers automated email notification to student when status changes.
+    Enforces company/recruiter isolation strictly via job__recruiter=request.user.
     """
     if not hasattr(request.user, 'recruiter_profile'):
         return JsonResponse({'success': False, 'error': 'Unauthorized'}, status=403)
@@ -255,16 +272,31 @@ def update_application_status_api(request, application_id):
         new_status = data.get('status')
         notes = data.get('notes')
 
-        if new_status and new_status in dict(Application.STATUS_CHOICES):
+        old_status = app.status
+        status_changed = False
+
+        if new_status and new_status in dict(Application.STATUS_CHOICES) and new_status != old_status:
             app.status = new_status
+            status_changed = True
+
         if notes is not None:
             app.recruiter_notes = notes
 
         app.save()
+
+        # Send automated email notification on status change (prevents duplicates)
+        email_sent = False
+        if status_changed:
+            from applications.notifications import send_application_notification
+            email_sent = send_application_notification(app, old_status=old_status, new_status=new_status)
+
         return JsonResponse({
             'success': True,
             'status': app.status,
-            'status_display': app.get_status_display()
+            'status_display': app.get_status_display(),
+            'email_sent': email_sent,
+            'status_changed': status_changed,
+            'student_email': app.student.email or '',
         })
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=400)

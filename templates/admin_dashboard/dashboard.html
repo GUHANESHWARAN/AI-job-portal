@@ -1,0 +1,263 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block content %}
+  <section class="kpi-grid">
+    <article class="kpi-card teal">
+      <div class="kpi-icon"><i class="fa-solid fa-user-graduate"></i></div>
+      <div>
+        <p>Total Students</p>
+        <h3>{{ student_count }}</h3>
+        <span class="trend positive">+8.4% vs last month</span>
+      </div>
+    </article>
+
+    <article class="kpi-card sage">
+      <div class="kpi-icon"><i class="fa-solid fa-user-tie"></i></div>
+      <div>
+        <p>Total Recruiters</p>
+        <h3>{{ recruiter_count }}</h3>
+        <span class="trend positive">+5.1% vs last month</span>
+      </div>
+    </article>
+
+    <article class="kpi-card lavender">
+      <div class="kpi-icon"><i class="fa-solid fa-building"></i></div>
+      <div>
+        <p>Total Companies</p>
+        <h3>{{ company_count }}</h3>
+        <span class="trend positive">+3.8% vs last month</span>
+      </div>
+    </article>
+
+    <article class="kpi-card mint">
+      <div class="kpi-icon"><i class="fa-solid fa-briefcase"></i></div>
+      <div>
+        <p>Active Jobs</p>
+        <h3>{{ active_jobs }}</h3>
+        <span class="trend positive">+12 new this week</span>
+      </div>
+    </article>
+
+    <article class="kpi-card warm">
+      <div class="kpi-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+      <div>
+        <p>Active Internships</p>
+        <h3>{{ active_internships }}</h3>
+        <span class="trend positive">+4 in pipeline</span>
+      </div>
+    </article>
+
+    <article class="kpi-card blue">
+      <div class="kpi-icon"><i class="fa-solid fa-file-lines"></i></div>
+      <div>
+        <p>Total Applications</p>
+        <h3>{{ total_applications }}</h3>
+        <span class="trend neutral">Across all open roles</span>
+      </div>
+    </article>
+
+    <article class="kpi-card mint-alt">
+      <div class="kpi-icon"><i class="fa-solid fa-brain"></i></div>
+      <div>
+        <p>AI Matches</p>
+        <h3>{{ ai_matches }}</h3>
+        <span class="trend positive">The platform continues to learn</span>
+      </div>
+    </article>
+
+    <article class="kpi-card success">
+      <div class="kpi-icon"><i class="fa-solid fa-check-circle"></i></div>
+      <div>
+        <p>Shortlisted Candidates</p>
+        <h3>{{ shortlisted_candidates }}</h3>
+        <span class="trend positive">Fast-tracked pipeline</span>
+      </div>
+    </article>
+  </section>
+
+  <section class="analytics-grid">
+    <div class="panel span-2">
+      <div class="panel-header">
+        <div>
+          <p class="panel-label">Application overview</p>
+          <h3>Platform demand</h3>
+        </div>
+      </div>
+
+      <div class="stat-stack" style="grid-template-columns: repeat(5, minmax(0,1fr));">
+        <div class="mini-stat">
+          <span>Applications</span>
+          <strong>{{ app_overview.applications }}</strong>
+        </div>
+        <div class="mini-stat">
+          <span>Under Review</span>
+          <strong>{{ app_overview.under_review }}</strong>
+        </div>
+        <div class="mini-stat">
+          <span>Shortlisted</span>
+          <strong>{{ app_overview.shortlisted }}</strong>
+        </div>
+        <div class="mini-stat">
+          <span>Rejected</span>
+          <strong>{{ app_overview.rejected }}</strong>
+        </div>
+        <div class="mini-stat">
+          <span>Hired</span>
+          <strong>{{ app_overview.hired }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div>
+          <p class="panel-label">AI Recruitment Insights</p>
+          <h3>Average Match Score</h3>
+        </div>
+      </div>
+
+      <div class="score-ring">
+        <div class="score-ring-inner">
+          <strong>{{ ai_insights.average_match_score|floatformat:0 }}%</strong>
+        </div>
+      </div>
+      <ul class="insight-list">
+        <li><span>Most demanded skill</span><strong>{{ ai_insights.most_demanded_skill }}</strong></li>
+        <li><span>Students with skill gaps</span><strong>{{ ai_insights.students_with_skill_gaps }}</strong></li>
+        <li><span>AI match success rate</span><strong>{{ ai_insights.ai_match_success_rate }}%</strong></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="chart-grid">
+    <div class="panel">
+      <div class="panel-header">
+        <div>
+          <p class="panel-label">Student registration trend</p>
+          <h3>Growth</h3>
+        </div>
+      </div>
+      <div class="bars-chart">
+        {% for item in student_trend %}
+          <div class="bar-item">
+            <span class="bar" style="height: {{ item.percent }}%"></span>
+            <small>{{ item.label }}</small>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div>
+          <p class="panel-label">Company registration trend</p>
+          <h3>Network</h3>
+        </div>
+      </div>
+      <div class="bars-chart">
+        {% for item in company_trend %}
+          <div class="bar-item">
+            <span class="bar secondary" style="height: {{ item.percent }}%"></span>
+            <small>{{ item.label }}</small>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div>
+          <p class="panel-label">Job posting trend</p>
+          <h3>Hiring activity</h3>
+        </div>
+      </div>
+      <div class="bars-chart">
+        {% for item in job_trend %}
+          <div class="bar-item">
+            <span class="bar lavender" style="height: {{ item.percent }}%"></span>
+            <small>{{ item.label }}</small>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div>
+          <p class="panel-label">Internship posting trend</p>
+          <h3>Talent pipeline</h3>
+        </div>
+      </div>
+      <div class="bars-chart">
+        {% for item in internship_trend %}
+          <div class="bar-item">
+            <span class="bar mint" style="height: {{ item.percent }}%"></span>
+            <small>{{ item.label }}</small>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="content-grid">
+    <div class="panel">
+      <div class="panel-header">
+        <div>
+          <p class="panel-label">Recent activity</p>
+          <h3>Platform activity</h3>
+        </div>
+      </div>
+      <ul class="activity-list">
+        {% for item in recent_activity %}
+          <li>
+            <span class="activity-icon"><i class="fa-solid {{ item.icon }}"></i></span>
+            <div>
+              <strong>{{ item.title }}</strong>
+              <small>{{ item.entity }}</small>
+            </div>
+            <div class="activity-meta">
+              <time>{{ item.timestamp|date:'d M Y' }}</time>
+              <span class="badge badge-soft {{ item.status|lower|cut:' ' }}">{{ item.status }}</span>
+            </div>
+          </li>
+        {% empty %}
+          <li class="empty-state-inline">No activity recorded yet.</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div>
+          <p class="panel-label">Recent applications</p>
+          <h3>Top candidates</h3>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="admin-table compact">
+          <thead>
+            <tr>
+              <th>Candidate</th>
+              <th>Job</th>
+              <th>AI Match</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for application in recent_applications %}
+              <tr>
+                <td>{{ application.student.get_full_name|default:application.student.username }}</td>
+                <td>{{ application.job.title }}</td>
+                <td><span class="match-pill">{{ application.overall_match_score|floatformat:0 }}%</span></td>
+                <td><span class="badge badge-soft {{ application.status }}">{{ application.get_status_display }}</span></td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="4" class="empty-cell">No applications available.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+{% endblock %}
+

@@ -18,17 +18,17 @@
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
   {% block extra_css %}{% endblock %}
 </head>
-<body>
-
-  <!-- Top Navigation -->
-  <header class="navbar">
-    <div class="container nav-container">
-      <a href="{% url 'home' %}" class="nav-brand">
-        <div class="brand-icon">
-          <i class="fa-solid fa-brain"></i>
-        </div>
-        <span>CareerAI</span>
-      </a>
+<body class="app-body">
+  <div class="app-shell">
+    <!-- Top Navigation -->
+    <header class="navbar">
+      <div class="container nav-container">
+        <a href="{% url 'home' %}" class="nav-brand" aria-label="CareerAI home">
+          <div class="brand-icon">
+            <i class="fa-solid fa-brain"></i>
+          </div>
+          <span>CareerAI</span>
+        </a>
 
       <nav>
         <ul class="nav-menu">
@@ -65,9 +65,13 @@
             {% elif user.is_recruiter %}
               <span class="role-pill role-recruiter">Recruiter</span>
             {% else %}
-              <span class="role-pill role-student">Admin</span>
+              <span class="role-pill role-admin">Admin</span>
             {% endif %}
           </div>
+
+          {% if user.is_superuser or user.role == 'admin' %}
+            <a href="{% url 'admin_dashboard' %}" class="btn btn-primary btn-sm" title="Admin Control Center"><i class="fa-solid fa-shield-halved"></i> Control Center</a>
+          {% endif %}
           
           {% if user.is_student %}
             <a href="{% url 'student_profile' %}" class="btn btn-secondary btn-sm" title="Edit Profile"><i class="fa-solid fa-user-gear"></i></a>
@@ -84,75 +88,77 @@
     </div>
   </header>
 
-  <!-- Flash Messages -->
-  {% if messages %}
-    <div class="messages-container">
-      {% for message in messages %}
-        <div class="alert alert-{{ message.tags }}">
-          <div>
-            {% if message.tags == 'success' %}<i class="fa-solid fa-circle-check"></i>
-            {% elif message.tags == 'error' or message.tags == 'danger' %}<i class="fa-solid fa-circle-exclamation"></i>
-            {% elif message.tags == 'warning' %}<i class="fa-solid fa-triangle-exclamation"></i>
-            {% else %}<i class="fa-solid fa-circle-info"></i>{% endif %}
-            <span style="margin-left: 0.5rem;">{{ message }}</span>
+    <!-- Flash Messages -->
+    {% if messages %}
+      <div class="messages-container">
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }}">
+            <div>
+              {% if message.tags == 'success' %}<i class="fa-solid fa-circle-check"></i>
+              {% elif message.tags == 'error' or message.tags == 'danger' %}<i class="fa-solid fa-circle-exclamation"></i>
+              {% elif message.tags == 'warning' %}<i class="fa-solid fa-triangle-exclamation"></i>
+              {% else %}<i class="fa-solid fa-circle-info"></i>{% endif %}
+              <span style="margin-left: 0.5rem;">{{ message }}</span>
+            </div>
+            <button class="alert-close" onclick="this.parentElement.remove()">&times;</button>
           </div>
-          <button class="alert-close" onclick="this.parentElement.remove()">&times;</button>
-        </div>
-      {% endfor %}
-    </div>
-  {% endif %}
+        {% endfor %}
+      </div>
+    {% endif %}
 
-  <!-- Main View -->
-  <main class="main-content">
-    {% block content %}{% endblock %}
-  </main>
+    <!-- Main View -->
+    <main class="main-content">
+      {% block content %}{% endblock %}
+    </main>
 
-  <!-- Modern Footer -->
-  <footer class="footer">
-    <div class="container">
-      <div class="footer-grid">
-        <div class="footer-col">
-          <div class="nav-brand" style="margin-bottom: 1rem;">
-            <div class="brand-icon"><i class="fa-solid fa-brain"></i></div>
-            <span>CareerAI</span>
+    <!-- Modern Footer -->
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-col">
+            <div class="nav-brand" style="margin-bottom: 1rem;">
+              <div class="brand-icon"><i class="fa-solid fa-brain"></i></div>
+              <span>CareerAI</span>
+            </div>
+            <p>AI-Powered Job & Internship Intelligence Platform. Advanced resume parsing, ATS scoring, multi-factor semantic matching, and explainable recommendations.</p>
           </div>
-          <p>AI-Powered Job & Internship Intelligence Platform. Advanced resume parsing, ATS scoring, multi-factor semantic matching, and explainable recommendations.</p>
+          <div class="footer-col">
+            <h5>For Students</h5>
+            <ul>
+              <li><a href="{% url 'job_list' %}">Explore Jobs</a></li>
+              <li><a href="{% url 'internship_list' %}">Internships</a></li>
+              <li><a href="{% url 'login' %}">Resume ATS Analysis</a></li>
+              <li><a href="{% url 'login' %}">Skill Gap Roadmap</a></li>
+            </ul>
+          </div>
+          <div class="footer-col">
+            <h5>For Recruiters</h5>
+            <ul>
+              <li><a href="{% url 'login' %}">Post an Opportunity</a></li>
+              <li><a href="{% url 'login' %}">AI Candidate Discovery</a></li>
+              <li><a href="{% url 'login' %}">Applicant Tracking System</a></li>
+            </ul>
+          </div>
+          <div class="footer-col">
+            <h5>Platform & AI</h5>
+            <ul>
+              <li><a href="#">PyMuPDF & docx Parser</a></li>
+              <li><a href="#">TF-IDF Semantic Engine</a></li>
+              <li><a href="#">Explainable AI Matcher</a></li>
+              <li><a href="#">MySQL 8 Relational Model</a></li>
+            </ul>
+          </div>
         </div>
-        <div class="footer-col">
-          <h5>For Students</h5>
-          <ul>
-            <li><a href="{% url 'job_list' %}">Explore Jobs</a></li>
-            <li><a href="{% url 'internship_list' %}">Internships</a></li>
-            <li><a href="{% url 'login' %}">Resume ATS Analysis</a></li>
-            <li><a href="{% url 'login' %}">Skill Gap Roadmap</a></li>
-          </ul>
-        </div>
-        <div class="footer-col">
-          <h5>For Recruiters</h5>
-          <ul>
-            <li><a href="{% url 'login' %}">Post an Opportunity</a></li>
-            <li><a href="{% url 'login' %}">AI Candidate Discovery</a></li>
-            <li><a href="{% url 'login' %}">Applicant Tracking System</a></li>
-          </ul>
-        </div>
-        <div class="footer-col">
-          <h5>Platform & AI</h5>
-          <ul>
-            <li><a href="#">PyMuPDF & docx Parser</a></li>
-            <li><a href="#">TF-IDF Semantic Engine</a></li>
-            <li><a href="#">Explainable AI Matcher</a></li>
-            <li><a href="#">MySQL 8 Relational Model</a></li>
-          </ul>
+        <div class="footer-bottom">
+          <p>&copy; 2026 AI-Powered Job & Internship Intelligence Platform. Final Year Research Project. Built with Django 5, MySQL 8, and Machine Learning.</p>
         </div>
       </div>
-      <div class="footer-bottom">
-        <p>&copy; 2026 AI-Powered Job & Internship Intelligence Platform. Final Year Research Project. Built with Django 5, MySQL 8, and Machine Learning.</p>
-      </div>
-    </div>
-  </footer>
+    </footer>
 
-  <!-- Scripts -->
-  <script src="{% static 'js/main.js' %}"></script>
-  {% block extra_js %}{% endblock %}
+    <!-- Scripts -->
+    <script src="{% static 'js/main.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+  </div>
 </body>
 </html>
+

@@ -1,0 +1,153 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block content %}
+  <section class="detail-header card-surface">
+    <div class="detail-header-main">
+      <span class="avatar large">{{ student.user.first_name|first|default:'S' }}</span>
+      <div>
+        <div class="detail-badge-group">
+          <p class="panel-label">Student Profile</p>
+          {% if student.user.is_active %}
+            <span class="badge badge-soft active"><i class="fa-solid fa-circle-check"></i> Active</span>
+          {% else %}
+            <span class="badge badge-soft danger"><i class="fa-solid fa-circle-xmark"></i> Inactive</span>
+          {% endif %}
+        </div>
+        <h2>{{ student.user.get_full_name|default:student.user.username }}</h2>
+        <p>{{ student.headline|default:'Job Seeker / Student Candidate' }}</p>
+      </div>
+    </div>
+    <div class="detail-actions">
+      <a href="{% url 'admin_students' %}" class="secondary-button"><i class="fa-solid fa-arrow-left"></i> Back to List</a>
+      {% if student.resume %}
+        <a href="{{ student.resume.url }}" target="_blank" class="secondary-button"><i class="fa-solid fa-file-arrow-down"></i> View Resume</a>
+      {% endif %}
+      <form method="post" action="{% url 'admin_toggle_user_status' student.user.id %}" style="display:inline;" onsubmit="return confirm('Are you sure you want to {% if student.user.is_active %}deactivate{% else %}activate{% endif %} this student account?');">
+        {% csrf_token %}
+        {% if student.user.is_active %}
+          <button type="submit" class="danger-button"><i class="fa-solid fa-user-slash"></i> Deactivate</button>
+        {% else %}
+          <button type="submit" class="primary-button"><i class="fa-solid fa-user-check"></i> Activate Account</button>
+        {% endif %}
+      </form>
+    </div>
+  </section>
+
+  <section class="detail-grid">
+    <div class="panel">
+      <div class="panel-header">
+        <div>
+          <p class="panel-label">Account & Academic</p>
+          <h3>Overview</h3>
+        </div>
+      </div>
+      <ul class="detail-list">
+        <li><span>Username</span><strong>@{{ student.user.username }}</strong></li>
+        <li><span>Email Address</span><strong>{{ student.user.email }}</strong></li>
+        <li><span>Phone</span><strong>{{ student.user.phone|default:'Not provided' }}</strong></li>
+        <li><span>Location</span><strong>{{ student.location|default:'Not specified' }}</strong></li>
+        <li><span>Degree</span><strong>{{ student.degree|default:'Not set' }}</strong></li>
+        <li><span>Institution</span><strong>{{ student.institution|default:'Not set' }}</strong></li>
+        <li><span>Applications Filed</span><strong>{{ application_count }}</strong></li>
+        <li><span>Resume ATS Score</span><strong>{{ student.ats_score }}%</strong></li>
+        <li><span>Joined Platform</span><strong>{{ student.user.date_joined|date:'d M Y, H:i' }}</strong></li>
+      </ul>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div>
+          <p class="panel-label">Skill Profile</p>
+          <h3>Identified Skills</h3>
+        </div>
+      </div>
+      <div class="chip-list">
+        {% for skill in student.get_skills_list %}
+          <span class="chip">{{ skill }}</span>
+        {% empty %}
+          <span class="chip empty-chip">No skills extracted yet</span>
+        {% endfor %}
+      </div>
+      {% if student.bio %}
+        <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+          <p class="panel-label">Biography</p>
+          <p style="font-size: 0.95rem; line-height: 1.5; color: var(--text);">{{ student.bio }}</p>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="detail-grid">
+    <div class="panel">
+      <div class="panel-header">
+        <div>
+          <p class="panel-label">Academic History</p>
+          <h3>Education Records</h3>
+        </div>
+      </div>
+      {% for item in educations %}
+        <div class="detail-block">
+          <strong>{{ item.degree }}</strong>
+          <p>{{ item.institution }}{% if item.field_of_study %} · {{ item.field_of_study }}{% endif %}</p>
+          <small>{{ item.start_year|default:'-' }} – {{ item.end_year|default:'Current' }}</small>
+        </div>
+      {% empty %}
+        <p class="empty-state-inline">No education entries recorded.</p>
+      {% endfor %}
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div>
+          <p class="panel-label">Work Experience</p>
+          <h3>Career Background</h3>
+        </div>
+      </div>
+      {% for item in experiences %}
+        <div class="detail-block">
+          <strong>{{ item.title }}</strong>
+          <p>{{ item.company }}</p>
+          <small>{{ item.start_date|date:'M Y' }} – {% if item.is_current %}Present{% else %}{{ item.end_date|date:'M Y' }}{% endif %}</small>
+        </div>
+      {% empty %}
+        <p class="empty-state-inline">No work experience recorded.</p>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <div>
+        <p class="panel-label">Activity Track</p>
+        <h3>Applications by this Candidate ({{ application_count }})</h3>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Job / Opportunity</th>
+            <th>Company</th>
+            <th>AI Match Score</th>
+            <th>Status</th>
+            <th>Applied Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for app in applications %}
+            <tr>
+              <td><strong>{{ app.job.title }}</strong></td>
+              <td>{{ app.job.company.name|default:'Independent' }}</td>
+              <td><span class="match-pill">{{ app.overall_match_score|floatformat:0 }}%</span></td>
+              <td><span class="badge badge-soft {{ app.status }}">{{ app.get_status_display }}</span></td>
+              <td>{{ app.applied_at|date:'d M Y' }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5" class="empty-cell">This student has not submitted any applications yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+{% endblock %}
+

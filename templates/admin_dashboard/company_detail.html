@@ -1,0 +1,141 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block content %}
+  <section class="detail-header card-surface">
+    <div class="detail-header-main">
+      <span class="avatar large company-avatar"><i class="fa-solid fa-building"></i></span>
+      <div>
+        <div class="detail-badge-group">
+          <p class="panel-label">Company Profile</p>
+          {% if company.is_verified %}
+            <span class="badge badge-soft active"><i class="fa-solid fa-circle-check"></i> Verified</span>
+          {% else %}
+            <span class="badge badge-soft warning"><i class="fa-solid fa-clock"></i> Pending Verification</span>
+          {% endif %}
+          {% if company.is_active %}
+            <span class="badge badge-soft success">Active</span>
+          {% else %}
+            <span class="badge badge-soft danger">Inactive</span>
+          {% endif %}
+        </div>
+        <h2>{{ company.name }}</h2>
+        <p>{{ company.industry }} · {{ company.location|default:'Location not set' }}</p>
+      </div>
+    </div>
+    <div class="detail-actions">
+      <a href="{% url 'admin_companies' %}" class="secondary-button"><i class="fa-solid fa-arrow-left"></i> Back to List</a>
+      {% if company.website %}
+        <a href="{{ company.website }}" target="_blank" rel="noopener" class="secondary-button"><i class="fa-solid fa-globe"></i> Website</a>
+      {% endif %}
+      <form method="post" action="{% url 'admin_toggle_company_verification' company.id %}" style="display:inline;">
+        {% csrf_token %}
+        {% if company.is_verified %}
+          <button type="submit" class="secondary-button warning"><i class="fa-solid fa-ban"></i> Unverify</button>
+        {% else %}
+          <button type="submit" class="primary-button"><i class="fa-solid fa-circle-check"></i> Verify Company</button>
+        {% endif %}
+      </form>
+      <form method="post" action="{% url 'admin_toggle_company_status' company.id %}" style="display:inline;">
+        {% csrf_token %}
+        {% if company.is_active %}
+          <button type="submit" class="danger-button"><i class="fa-solid fa-power-off"></i> Deactivate</button>
+        {% else %}
+          <button type="submit" class="primary-button success"><i class="fa-solid fa-play"></i> Activate</button>
+        {% endif %}
+      </form>
+    </div>
+  </section>
+
+  <section class="detail-grid">
+    <div class="panel">
+      <div class="panel-header">
+        <div>
+          <p class="panel-label">Organization Snapshot</p>
+          <h3>Operational Metrics</h3>
+        </div>
+      </div>
+      <ul class="detail-list">
+        <li><span>Company Name</span><strong>{{ company.name }}</strong></li>
+        <li><span>Industry Sector</span><strong>{{ company.industry }}</strong></li>
+        <li><span>Company Size</span><strong>{{ company.get_company_size_display|default:company.company_size }}</strong></li>
+        <li><span>Headquarters / Location</span><strong>{{ company.location|default:'Not set' }}</strong></li>
+        <li><span>Recruiters Associated</span><strong>{{ recruiter_count }}</strong></li>
+        <li><span>Open Job Positions</span><strong>{{ jobs.count }}</strong></li>
+        <li><span>Total Applications Received</span><strong>{{ application_count }}</strong></li>
+        <li><span>Verification Status</span><strong>{% if company.is_verified %}Verified{% else %}Unverified{% endif %}</strong></li>
+        <li><span>Joined Platform</span><strong>{{ company.created_at|date:'d M Y, H:i' }}</strong></li>
+      </ul>
+      {% if company.description %}
+        <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+          <p class="panel-label">Company Summary</p>
+          <p style="font-size: 0.95rem; line-height: 1.5; color: var(--text);">{{ company.description }}</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div>
+          <p class="panel-label">Recruitment Team</p>
+          <h3>Authorized Recruiters ({{ recruiter_count }})</h3>
+        </div>
+      </div>
+      <ul class="activity-list">
+        {% for rec in recruiters %}
+          <li>
+            <span class="avatar small">{{ rec.user.first_name|first|default:'R' }}</span>
+            <div>
+              <strong>{{ rec.user.get_full_name|default:rec.user.username }}</strong>
+              <small>{{ rec.designation|default:'Recruiter' }} · {{ rec.user.email }}</small>
+            </div>
+            <div class="activity-meta">
+              <a href="{% url 'admin_recruiter_detail' rec.user_id %}" class="table-action">View</a>
+            </div>
+          </li>
+        {% empty %}
+          <li class="empty-state-inline">No recruiters associated with this company yet.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <div>
+        <p class="panel-label">Talent Demand</p>
+        <h3>Open Job & Internship Positions ({{ jobs.count }})</h3>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Position Title</th>
+            <th>Type</th>
+            <th>Location</th>
+            <th>Work Mode</th>
+            <th>Applications</th>
+            <th>Status</th>
+            <th>Posted Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for job in jobs %}
+            <tr>
+              <td><strong>{{ job.title }}</strong></td>
+              <td>{{ job.get_job_type_display }}</td>
+              <td>{{ job.location|default:'Remote' }}</td>
+              <td>{{ job.get_work_mode_display }}</td>
+              <td><strong>{{ job.applications.count }}</strong></td>
+              <td><span class="badge badge-soft {{ job.status }}">{{ job.get_status_display }}</span></td>
+              <td>{{ job.created_at|date:'d M Y' }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="7" class="empty-cell">No job or internship postings recorded for this company.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+{% endblock %}
+

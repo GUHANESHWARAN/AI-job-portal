@@ -19,6 +19,8 @@ class Company(models.Model):
     location = models.CharField(max_length=200, blank=True, default='')
     description = models.TextField(blank=True, default='')
     logo = models.ImageField(upload_to='company_logos/', blank=True, null=True)
+    is_verified = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

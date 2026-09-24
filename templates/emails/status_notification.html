@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Application Status Update — TalentBridge AI</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #F8FAFC; color: #0F172A; }
+  .wrapper { max-width: 600px; margin: 40px auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 24px rgba(79,70,229,0.10); }
+  .header { background: linear-gradient(135deg, #4F46E5 0%, #0EA5E9 100%); padding: 40px 32px; text-align: center; }
+  .header h1 { color: #ffffff; font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+  .header p { color: rgba(255,255,255,0.85); font-size: 13px; margin-top: 6px; }
+  .badge { display: inline-block; margin-top: 20px; padding: 8px 22px; border-radius: 100px; font-size: 13px; font-weight: 700; letter-spacing: 0.5px; }
+  .badge-reviewing    { background: #DBEAFE; color: #1D4ED8; }
+  .badge-shortlisted  { background: #D1FAE5; color: #065F46; }
+  .badge-interview    { background: #EDE9FE; color: #5B21B6; }
+  .badge-selected     { background: #D1FAE5; color: #065F46; }
+  .badge-offered      { background: #FEF3C7; color: #92400E; }
+  .badge-accepted     { background: #D1FAE5; color: #065F46; }
+  .badge-rejected     { background: #FEE2E2; color: #991B1B; }
+  .body { padding: 36px 32px; }
+  .greeting { font-size: 18px; font-weight: 600; color: #0F172A; margin-bottom: 16px; }
+  .message { font-size: 15px; line-height: 1.7; color: #334155; margin-bottom: 24px; }
+  .info-card { background: #F1F5F9; border-left: 4px solid #4F46E5; border-radius: 8px; padding: 20px 20px; margin-bottom: 28px; }
+  .info-card table { width: 100%; border-collapse: collapse; }
+  .info-card td { padding: 6px 0; font-size: 14px; color: #475569; }
+  .info-card td:first-child { font-weight: 600; color: #0F172A; width: 140px; }
+  .next-steps { background: #EEF2FF; border-radius: 8px; padding: 20px; margin-bottom: 28px; }
+  .next-steps h3 { font-size: 14px; font-weight: 700; color: #4338CA; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .next-steps p  { font-size: 14px; color: #3730A3; line-height: 1.6; }
+  .cta-btn { display: inline-block; background: linear-gradient(135deg, #4F46E5, #0EA5E9); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 15px; font-weight: 600; letter-spacing: 0.3px; margin-bottom: 28px; }
+  .footer { background: #F8FAFC; border-top: 1px solid #E2E8F0; padding: 24px 32px; text-align: center; }
+  .footer p { font-size: 12px; color: #94A3B8; line-height: 1.6; }
+  .footer a { color: #4F46E5; text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <!-- Header -->
+  <div class="header">
+    <h1>TalentBridge AI</h1>
+    <p>AI-Powered Job &amp; Internship Portal</p>
+    <span class="badge badge-{{ status }}">{{ status_display }}</span>
+  </div>
+
+  <!-- Body -->
+  <div class="body">
+    <p class="greeting">Hello, {{ student_name }}!</p>
+
+    <p class="message">{{ message }}</p>
+
+    <!-- Application Details -->
+    <div class="info-card">
+      <table>
+        <tr>
+          <td>Position</td>
+          <td>{{ job_title }}</td>
+        </tr>
+        <tr>
+          <td>Company</td>
+          <td>{{ company_name }}</td>
+        </tr>
+        <tr>
+          <td>Type</td>
+          <td>{{ job_type }}</td>
+        </tr>
+        <tr>
+          <td>Location</td>
+          <td>{{ job_location }}</td>
+        </tr>
+        <tr>
+          <td>Status</td>
+          <td><strong>{{ status_display }}</strong></td>
+        </tr>
+        <tr>
+          <td>Updated</td>
+          <td>{{ updated_at }}</td>
+        </tr>
+      </table>
+    </div>
+
+    {% if next_steps %}
+    <div class="next-steps">
+      <h3>Next Steps</h3>
+      <p>{{ next_steps }}</p>
+    </div>
+    {% endif %}
+
+    <a class="cta-btn" href="{{ portal_url }}">View Application on Portal</a>
+
+    <p class="message" style="font-size:13px; color:#94A3B8;">
+      This email was sent because your application status changed. 
+      Please do not reply to this email — contact the company directly for queries.
+    </p>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <p>
+      TalentBridge AI &mdash; AI-Powered Recruitment Platform<br>
+      &copy; 2026 TalentBridge. All rights reserved.<br>
+      <a href="{{ portal_url }}">Visit Portal</a>
+    </p>
+  </div>
+</div>
+</body>
+</html>
+

@@ -61,3 +61,4 @@ class JobForm(forms.ModelForm):
         cleaned_data['required_skills'] = [s.strip() for s in req_str.split(',') if s.strip()]
         cleaned_data['preferred_skills'] = [s.strip() for s in pref_str.split(',') if s.strip()]
         return cleaned_data
+

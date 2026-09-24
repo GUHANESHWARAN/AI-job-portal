@@ -1,0 +1,1076 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block content %}
+
+{# ─────────────────────────────────────────────── #}
+{#  Inline styles scoped to this page only          #}
+{# ─────────────────────────────────────────────── #}
+<style>
+  /* ── Design tokens ───────────────────────────── */
+  :root {
+    --c-primary:    #4F46E5;
+    --c-secondary:  #0EA5E9;
+    --c-lavender:   #9B8AFB;
+    --c-mint:       #B8E0D2;
+    --c-bg:         #F7F7F2;
+    --c-white:      #FFFFFF;
+    --c-text:       #24302D;
+    --c-muted:      #71807B;
+    --c-border:     #E4E9E5;
+    --c-success:    #6FA776;
+    --c-warning:    #D6A85F;
+    --c-danger:     #D47777;
+    --radius-md:    12px;
+    --radius-lg:    18px;
+    --shadow-sm:    0 1px 4px rgba(36,48,45,.07);
+    --shadow-md:    0 4px 20px rgba(36,48,45,.10);
+    --transition:   .22s cubic-bezier(.4,0,.2,1);
+  }
+
+  /* ── Page wrapper ────────────────────────────── */
+  .analytics-root {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    padding-bottom: 40px;
+  }
+
+  /* ── Toolbar / date filter ───────────────────── */
+  .analytics-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+    background: var(--c-white);
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-md);
+    padding: 16px 22px;
+    box-shadow: var(--shadow-sm);
+  }
+  .analytics-toolbar .toolbar-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: .95rem;
+    color: var(--c-text);
+  }
+  .analytics-toolbar .toolbar-title i {
+    color: var(--c-primary);
+    font-size: 1.1rem;
+  }
+  .toolbar-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .range-btn {
+    padding: 7px 18px;
+    border-radius: 8px;
+    border: 1.5px solid var(--c-border);
+    background: var(--c-bg);
+    color: var(--c-muted);
+    font-size: .82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .range-btn:hover {
+    border-color: var(--c-primary);
+    color: var(--c-primary);
+    background: #EAF2EF;
+  }
+  .range-btn.active {
+    background: var(--c-primary);
+    border-color: var(--c-primary);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(79,70,229,.3);
+  }
+  /* Hidden form for select fallback */
+  .range-select-wrap {
+    display: none;
+  }
+
+  /* ── KPI row ─────────────────────────────────── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+  }
+  @media (max-width: 1100px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 580px)  { .kpi-grid { grid-template-columns: 1fr; } }
+
+  .kpi-card {
+    background: var(--c-white);
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-lg);
+    padding: 22px 24px 20px;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+    overflow: hidden;
+    transition: var(--transition);
+  }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 4px;
+    border-radius: 4px 0 0 4px;
+    background: var(--kpi-accent, var(--c-primary));
+  }
+  .kpi-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+
+  .kpi-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .kpi-label {
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--c-muted);
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+  .kpi-icon {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    background: color-mix(in srgb, var(--kpi-accent, var(--c-primary)) 12%, transparent);
+    color: var(--kpi-accent, var(--c-primary));
+    font-size: 1rem;
+  }
+  .kpi-value {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--c-text);
+    line-height: 1;
+    letter-spacing: -.03em;
+  }
+  .kpi-sub {
+    font-size: .78rem;
+    color: var(--c-muted);
+  }
+  .kpi-sub b { color: var(--c-success); }
+
+  /* ── Chart grid ──────────────────────────────── */
+  .chart-grid-section {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  @media (max-width: 1100px) { .chart-grid-section { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 640px)  { .chart-grid-section { grid-template-columns: 1fr; } }
+
+  .chart-panel {
+    background: var(--c-white);
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-lg);
+    padding: 22px 22px 16px;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    transition: var(--transition);
+  }
+  .chart-panel:hover { box-shadow: var(--shadow-md); }
+
+  .chart-panel-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .chart-panel-meta {}
+  .chart-panel-label {
+    font-size: .72rem;
+    font-weight: 700;
+    color: var(--c-muted);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .chart-panel-label i { font-size: .8rem; }
+  .chart-panel-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--c-text);
+    margin-top: 4px;
+  }
+  .chart-total-badge {
+    font-size: .75rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: color-mix(in srgb, var(--bar-color, var(--c-primary)) 12%, transparent);
+    color: var(--bar-color, var(--c-primary));
+    white-space: nowrap;
+  }
+
+  /* CSS Bar chart */
+  .bars-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    height: 120px;
+    padding: 0 2px;
+    position: relative;
+  }
+  /* Subtle horizontal grid lines */
+  .bars-chart::before,
+  .bars-chart::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0;
+    border-top: 1px dashed var(--c-border);
+    pointer-events: none;
+  }
+  .bars-chart::before { top: 0; }
+  .bars-chart::after  { top: 50%; }
+
+  .bar-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 5px;
+    height: 100%;
+    min-width: 0;
+    position: relative;
+  }
+  .bar-item .bar {
+    width: 100%;
+    max-width: 28px;
+    border-radius: 5px 5px 0 0;
+    background: var(--bar-color, var(--c-primary));
+    min-height: 4px;
+    transition: height .6s cubic-bezier(.4,0,.2,1);
+    position: relative;
+    cursor: pointer;
+  }
+  .bar-item .bar:hover { filter: brightness(1.12); }
+
+  /* Tooltip on hover */
+  .bar-item .bar[data-val]::after {
+    content: attr(data-val);
+    position: absolute;
+    bottom: calc(100% + 5px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--c-text);
+    color: #fff;
+    font-size: .67rem;
+    font-weight: 700;
+    padding: 3px 7px;
+    border-radius: 5px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .15s;
+  }
+  .bar-item .bar[data-val]:hover::after { opacity: 1; }
+
+  .bar-item small {
+    font-size: .6rem;
+    color: var(--c-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    text-align: center;
+  }
+
+  /* ── Funnel section ──────────────────────────── */
+  .funnel-panel {
+    background: var(--c-white);
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-lg);
+    padding: 28px 32px;
+    box-shadow: var(--shadow-sm);
+  }
+  .funnel-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .funnel-panel-header h2 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--c-text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .funnel-panel-header h2 i { color: var(--c-primary); }
+  .funnel-subtitle {
+    font-size: .8rem;
+    color: var(--c-muted);
+    margin-top: 3px;
+  }
+
+  .funnel-track {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .funnel-step {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 14px;
+  }
+  .funnel-step-label {
+    width: 110px;
+    flex-shrink: 0;
+    font-size: .8rem;
+    font-weight: 600;
+    color: var(--c-text);
+    text-align: right;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 7px;
+  }
+  .funnel-step-label i { font-size: .85rem; color: var(--step-color, var(--c-primary)); }
+  .funnel-bar-wrap {
+    flex: 1;
+    position: relative;
+    height: 38px;
+    display: flex;
+    align-items: center;
+  }
+  .funnel-bar {
+    height: 38px;
+    border-radius: 6px;
+    background: var(--step-color, var(--c-primary));
+    opacity: .88;
+    display: flex;
+    align-items: center;
+    padding-left: 14px;
+    transition: width .7s cubic-bezier(.4,0,.2,1);
+    min-width: 48px;
+    position: relative;
+  }
+  .funnel-bar:hover { opacity: 1; filter: brightness(1.06); }
+
+  .funnel-count {
+    font-size: .82rem;
+    font-weight: 800;
+    color: #fff;
+    white-space: nowrap;
+  }
+  .funnel-pct {
+    width: 56px;
+    flex-shrink: 0;
+    font-size: .8rem;
+    font-weight: 700;
+    color: var(--c-muted);
+    text-align: left;
+    padding-left: 10px;
+  }
+  .funnel-arrow {
+    text-align: center;
+    font-size: .7rem;
+    color: var(--c-border);
+    line-height: 1;
+    padding: 1px 0 1px 124px;
+  }
+
+  /* Accepted vs Rejected split */
+  .funnel-split-row {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+    margin-top: 8px;
+  }
+  .funnel-split-card {
+    flex: 1;
+    border-radius: 12px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border: 1.5px solid var(--split-border, var(--c-border));
+    background: color-mix(in srgb, var(--split-color, var(--c-primary)) 7%, transparent);
+  }
+  .split-icon {
+    width: 42px; height: 42px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--split-color, var(--c-primary)) 15%, transparent);
+    color: var(--split-color, var(--c-primary));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+  .split-label {
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--c-muted);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+  .split-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--c-text);
+    line-height: 1.1;
+  }
+  .split-pct {
+    font-size: .78rem;
+    color: var(--split-color, var(--c-primary));
+    font-weight: 600;
+  }
+
+  /* ── AI Performance panel ────────────────────── */
+  .ai-panel {
+    background: linear-gradient(135deg, #1e3a34 0%, #2d5247 60%, #3a6455 100%);
+    border-radius: var(--radius-lg);
+    padding: 32px 36px;
+    box-shadow: var(--shadow-md);
+    color: #fff;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr auto 1fr;
+    gap: 0;
+    align-items: center;
+  }
+  @media (max-width: 900px) {
+    .ai-panel {
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+    .ai-divider { display: none; }
+  }
+
+  .ai-panel-header {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .ai-panel-header i {
+    width: 42px; height: 42px;
+    border-radius: 12px;
+    background: rgba(255,255,255,.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+  }
+  .ai-panel-header h2 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #fff;
+  }
+  .ai-panel-header p {
+    font-size: .78rem;
+    color: rgba(255,255,255,.6);
+    margin-top: 2px;
+  }
+
+  .ai-metric {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+    padding: 8px 16px;
+  }
+  .ai-metric-icon {
+    width: 52px; height: 52px;
+    border-radius: 14px;
+    background: rgba(255,255,255,.12);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem;
+    color: rgba(255,255,255,.9);
+  }
+  .ai-metric-value {
+    font-size: 2.4rem;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1;
+    letter-spacing: -.04em;
+  }
+  .ai-metric-label {
+    font-size: .78rem;
+    color: rgba(255,255,255,.6);
+    font-weight: 500;
+    letter-spacing: .02em;
+  }
+  .ai-metric-badge {
+    font-size: .72rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    background: rgba(255,255,255,.15);
+    color: rgba(255,255,255,.85);
+    border: 1px solid rgba(255,255,255,.2);
+  }
+
+  /* Score ring */
+  .score-ring-wrap {
+    position: relative;
+    width: 110px; height: 110px;
+    flex-shrink: 0;
+  }
+  .score-ring-wrap svg {
+    transform: rotate(-90deg);
+  }
+  .score-ring-bg { stroke: rgba(255,255,255,.12); }
+  .score-ring-fill {
+    stroke: #B8E0D2;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s cubic-bezier(.4,0,.2,1);
+  }
+  .score-ring-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1;
+  }
+  .score-ring-text small {
+    font-size: .6rem;
+    color: rgba(255,255,255,.55);
+    font-weight: 500;
+    margin-top: 2px;
+  }
+
+  .ai-divider {
+    width: 1px;
+    height: 90px;
+    background: rgba(255,255,255,.12);
+    margin: 0 8px;
+  }
+
+  /* ── Section heading ─────────────────────────── */
+  .section-heading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: .8rem;
+    font-weight: 700;
+    color: var(--c-muted);
+    text-transform: uppercase;
+    letter-spacing: .07em;
+  }
+  .section-heading::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--c-border);
+  }
+  .section-heading i { color: var(--c-primary); }
+
+  /* ── Responsive tweaks ───────────────────────── */
+  @media (max-width: 900px) {
+    .funnel-step-label { width: 80px; font-size: .74rem; }
+    .funnel-panel { padding: 20px 16px; }
+    .ai-panel { padding: 24px 20px; }
+    .kpi-value { font-size: 1.5rem; }
+  }
+</style>
+
+{# ═══════════════════════════════════════════════ #}
+{#  Page root                                       #}
+{# ═══════════════════════════════════════════════ #}
+<div class="analytics-root">
+
+  {# ─── 1. Date-range toolbar ─────────────────── #}
+  <div class="analytics-toolbar">
+    <div class="toolbar-title">
+      <i class="fa-solid fa-chart-pie"></i>
+      Analytics Overview
+    </div>
+
+    <div class="toolbar-controls" id="rangeControls">
+      <button type="button" class="range-btn {% if range_days == 7 %}active{% endif %}"   data-range="7">7 Days</button>
+      <button type="button" class="range-btn {% if range_days == 30 %}active{% endif %}"  data-range="30">30 Days</button>
+      <button type="button" class="range-btn {% if range_days == 90 %}active{% endif %}"  data-range="90">3 Months</button>
+      <button type="button" class="range-btn {% if range_days == 180 %}active{% endif %}" data-range="180">6 Months</button>
+      <button type="button" class="range-btn {% if range_days == 365 %}active{% endif %}" data-range="365">1 Year</button>
+    </div>
+
+    {# Hidden form — JS submits this #}
+    <form method="get" id="rangeForm" class="range-select-wrap">
+      <input type="hidden" name="range" id="rangeInput" value="{{ range_days }}">
+    </form>
+  </div>
+
+
+  {# ─── 2. KPI cards ──────────────────────────── #}
+  <div class="kpi-grid">
+
+    {# Total Students — value filled by JS sum of bar data-val attrs #}
+    <div class="kpi-card" style="--kpi-accent: #4F46E5;">
+      <div class="kpi-top">
+        <span class="kpi-label">Total Students</span>
+        <div class="kpi-icon"><i class="fa-solid fa-user-graduate"></i></div>
+      </div>
+      <div class="kpi-value" id="kpiStudents">—</div>
+      <div class="kpi-sub">Registered over selected period</div>
+    </div>
+
+    {# Total Jobs #}
+    <div class="kpi-card" style="--kpi-accent: #9B8AFB;">
+      <div class="kpi-top">
+        <span class="kpi-label">Total Jobs Posted</span>
+        <div class="kpi-icon"><i class="fa-solid fa-briefcase"></i></div>
+      </div>
+      <div class="kpi-value" id="kpiJobs">—</div>
+      <div class="kpi-sub">Active listings in period</div>
+    </div>
+
+    {# Total Applications #}
+    <div class="kpi-card" style="--kpi-accent: #D6A85F;">
+      <div class="kpi-top">
+        <span class="kpi-label">Total Applications</span>
+        <div class="kpi-icon"><i class="fa-solid fa-file-lines"></i></div>
+      </div>
+      <div class="kpi-value" id="kpiApps">—</div>
+      <div class="kpi-sub">Submitted over selected period</div>
+    </div>
+
+    {# AI Avg Score #}
+    <div class="kpi-card" style="--kpi-accent: #6FA776;">
+      <div class="kpi-top">
+        <span class="kpi-label">AI Avg Match Score</span>
+        <div class="kpi-icon"><i class="fa-solid fa-brain"></i></div>
+      </div>
+      <div class="kpi-value">{{ ai_data.avg_score|floatformat:1 }}<span style="font-size:1rem;font-weight:500;color:var(--c-muted);">/100</span></div>
+      <div class="kpi-sub"><b>{{ ai_data.high_match }}</b> high-match pairings</div>
+    </div>
+
+  </div>
+
+
+  {# ─── 3. Trend charts ───────────────────────── #}
+  <div class="section-heading"><i class="fa-solid fa-chart-column"></i> Trend Charts</div>
+
+  <div class="chart-grid-section">
+
+    {# — Students — #}
+    <div class="chart-panel" style="--bar-color: #4F46E5;">
+      <div class="chart-panel-header">
+        <div class="chart-panel-meta">
+          <div class="chart-panel-label" style="color:#4F46E5;"><i class="fa-solid fa-user-graduate"></i> Students</div>
+          <div class="chart-panel-title">Registration Growth</div>
+        </div>
+        <span class="chart-total-badge" id="badgeStudents">—</span>
+      </div>
+      <div class="bars-chart" style="--bar-color:#4F46E5;">
+        {% for item in student_trend %}
+          <div class="bar-item">
+            <span class="bar" style="height:{{ item.percent }}%;" data-val="{{ item.value }}"></span>
+            <small>{{ item.label }}</small>
+          </div>
+        {% empty %}
+          <p style="color:var(--c-muted);font-size:.8rem;margin:auto;">No data</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    {# — Recruiters — #}
+    <div class="chart-panel" style="--bar-color: #0EA5E9;">
+      <div class="chart-panel-header">
+        <div class="chart-panel-meta">
+          <div class="chart-panel-label" style="color:#0EA5E9;"><i class="fa-solid fa-user-tie"></i> Recruiters</div>
+          <div class="chart-panel-title">Recruiter Activity</div>
+        </div>
+        <span class="chart-total-badge" id="badgeRecruiters">—</span>
+      </div>
+      <div class="bars-chart" style="--bar-color:#0EA5E9;">
+        {% for item in recruiter_trend %}
+          <div class="bar-item">
+            <span class="bar" style="height:{{ item.percent }}%;" data-val="{{ item.value }}"></span>
+            <small>{{ item.label }}</small>
+          </div>
+        {% empty %}
+          <p style="color:var(--c-muted);font-size:.8rem;margin:auto;">No data</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    {# — Companies — #}
+    <div class="chart-panel" style="--bar-color: #9B8AFB;">
+      <div class="chart-panel-header">
+        <div class="chart-panel-meta">
+          <div class="chart-panel-label" style="color:#9B8AFB;"><i class="fa-solid fa-building"></i> Companies</div>
+          <div class="chart-panel-title">Company Registrations</div>
+        </div>
+        <span class="chart-total-badge" id="badgeCompanies">—</span>
+      </div>
+      <div class="bars-chart" style="--bar-color:#9B8AFB;">
+        {% for item in company_trend %}
+          <div class="bar-item">
+            <span class="bar" style="height:{{ item.percent }}%;" data-val="{{ item.value }}"></span>
+            <small>{{ item.label }}</small>
+          </div>
+        {% empty %}
+          <p style="color:var(--c-muted);font-size:.8rem;margin:auto;">No data</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    {# — Jobs — #}
+    <div class="chart-panel" style="--bar-color: #D6A85F;">
+      <div class="chart-panel-header">
+        <div class="chart-panel-meta">
+          <div class="chart-panel-label" style="color:#D6A85F;"><i class="fa-solid fa-briefcase"></i> Jobs</div>
+          <div class="chart-panel-title">Job Postings</div>
+        </div>
+        <span class="chart-total-badge" id="badgeJobs">—</span>
+      </div>
+      <div class="bars-chart" style="--bar-color:#D6A85F;">
+        {% for item in job_trend %}
+          <div class="bar-item">
+            <span class="bar" style="height:{{ item.percent }}%;" data-val="{{ item.value }}"></span>
+            <small>{{ item.label }}</small>
+          </div>
+        {% empty %}
+          <p style="color:var(--c-muted);font-size:.8rem;margin:auto;">No data</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    {# — Internships — #}
+    <div class="chart-panel" style="--bar-color: #B8E0D2;">
+      <div class="chart-panel-header">
+        <div class="chart-panel-meta">
+          <div class="chart-panel-label" style="color:#4F46E5;"><i class="fa-solid fa-graduation-cap"></i> Internships</div>
+          <div class="chart-panel-title">Internship Listings</div>
+        </div>
+        <span class="chart-total-badge" id="badgeInternships">—</span>
+      </div>
+      <div class="bars-chart" style="--bar-color:#4aab8e;">
+        {% for item in internship_trend %}
+          <div class="bar-item">
+            <span class="bar" style="height:{{ item.percent }}%;" data-val="{{ item.value }}"></span>
+            <small>{{ item.label }}</small>
+          </div>
+        {% empty %}
+          <p style="color:var(--c-muted);font-size:.8rem;margin:auto;">No data</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    {# — Applications — #}
+    <div class="chart-panel" style="--bar-color: #D47777;">
+      <div class="chart-panel-header">
+        <div class="chart-panel-meta">
+          <div class="chart-panel-label" style="color:#D47777;"><i class="fa-solid fa-file-lines"></i> Applications</div>
+          <div class="chart-panel-title">Application Volumes</div>
+        </div>
+        <span class="chart-total-badge" id="badgeApps">—</span>
+      </div>
+      <div class="bars-chart" style="--bar-color:#D47777;">
+        {% for item in application_trend %}
+          <div class="bar-item">
+            <span class="bar" style="height:{{ item.percent }}%;" data-val="{{ item.value }}"></span>
+            <small>{{ item.label }}</small>
+          </div>
+        {% empty %}
+          <p style="color:var(--c-muted);font-size:.8rem;margin:auto;">No data</p>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>{# /chart-grid-section #}
+
+  {# ─── 4. Application Funnel ─────────────────── #}
+  <div class="section-heading"><i class="fa-solid fa-filter"></i> Application Funnel</div>
+
+  {% with total=app_funnel.applied|default:1 %}
+  <div class="funnel-panel">
+    <div class="funnel-panel-header">
+      <div>
+        <h2><i class="fa-solid fa-arrow-trend-down"></i> Hiring Pipeline</h2>
+        <div class="funnel-subtitle">End-to-end candidate journey — {{ app_funnel.applied }} total applications</div>
+      </div>
+    </div>
+
+    <div class="funnel-track">
+
+      {# Applied #}
+      {% with pct=100 count=app_funnel.applied %}
+      <div class="funnel-step">
+        <div class="funnel-step-label" style="--step-color:#4F46E5;"><i class="fa-solid fa-paper-plane"></i> Applied</div>
+        <div class="funnel-bar-wrap">
+          <div class="funnel-bar" style="--step-color:#4F46E5; width:{{ pct }}%;">
+            <span class="funnel-count">{{ count }}</span>
+          </div>
+        </div>
+        <div class="funnel-pct">100%</div>
+      </div>
+      {% endwith %}
+
+      <div class="funnel-arrow">▼</div>
+
+      {# Reviewing #}
+      {% with count=app_funnel.reviewing %}
+      {% if app_funnel.applied %}
+      <div class="funnel-step">
+        <div class="funnel-step-label" style="--step-color:#0EA5E9;"><i class="fa-solid fa-eye"></i> Reviewing</div>
+        <div class="funnel-bar-wrap">
+          <div class="funnel-bar" style="--step-color:#0EA5E9; width:{% widthratio app_funnel.reviewing app_funnel.applied 100 %}%;">
+            <span class="funnel-count">{{ count }}</span>
+          </div>
+        </div>
+        <div class="funnel-pct">{% widthratio app_funnel.reviewing app_funnel.applied 100 %}%</div>
+      </div>
+      {% endif %}
+      {% endwith %}
+
+      <div class="funnel-arrow">▼</div>
+
+      {# Shortlisted #}
+      {% with count=app_funnel.shortlisted %}
+      {% if app_funnel.applied %}
+      <div class="funnel-step">
+        <div class="funnel-step-label" style="--step-color:#9B8AFB;"><i class="fa-solid fa-list-check"></i> Shortlisted</div>
+        <div class="funnel-bar-wrap">
+          <div class="funnel-bar" style="--step-color:#9B8AFB; width:{% widthratio app_funnel.shortlisted app_funnel.applied 100 %}%;">
+            <span class="funnel-count">{{ count }}</span>
+          </div>
+        </div>
+        <div class="funnel-pct">{% widthratio app_funnel.shortlisted app_funnel.applied 100 %}%</div>
+      </div>
+      {% endif %}
+      {% endwith %}
+
+      <div class="funnel-arrow">▼</div>
+
+      {# Interview #}
+      {% with count=app_funnel.interview %}
+      {% if app_funnel.applied %}
+      <div class="funnel-step">
+        <div class="funnel-step-label" style="--step-color:#D6A85F;"><i class="fa-solid fa-comments"></i> Interview</div>
+        <div class="funnel-bar-wrap">
+          <div class="funnel-bar" style="--step-color:#D6A85F; width:{% widthratio app_funnel.interview app_funnel.applied 100 %}%;">
+            <span class="funnel-count">{{ count }}</span>
+          </div>
+        </div>
+        <div class="funnel-pct">{% widthratio app_funnel.interview app_funnel.applied 100 %}%</div>
+      </div>
+      {% endif %}
+      {% endwith %}
+
+      <div class="funnel-arrow">▼</div>
+
+      {# Outcome split: Accepted + Rejected #}
+      <div class="funnel-split-row">
+        <div class="funnel-split-card" style="--split-color:#6FA776; --split-border:#c0dfc5;">
+          <div class="split-icon"><i class="fa-solid fa-circle-check"></i></div>
+          <div>
+            <div class="split-label">Accepted</div>
+            <div class="split-value">{{ app_funnel.accepted }}</div>
+            {% if app_funnel.applied %}
+            <div class="split-pct">{% widthratio app_funnel.accepted app_funnel.applied 100 %}% of pipeline</div>
+            {% endif %}
+          </div>
+        </div>
+        <div class="funnel-split-card" style="--split-color:#D47777; --split-border:#edc8c8;">
+          <div class="split-icon"><i class="fa-solid fa-circle-xmark"></i></div>
+          <div>
+            <div class="split-label">Rejected</div>
+            <div class="split-value">{{ app_funnel.rejected }}</div>
+            {% if app_funnel.applied %}
+            <div class="split-pct">{% widthratio app_funnel.rejected app_funnel.applied 100 %}% of pipeline</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+    </div>{# /funnel-track #}
+  </div>{# /funnel-panel #}
+  {% endwith %}
+
+  {# ─── 5. AI Performance panel ───────────────── #}
+  <div class="section-heading"><i class="fa-solid fa-brain"></i> AI Performance</div>
+
+  <div class="ai-panel">
+    <div class="ai-panel-header">
+      <div class="ai-panel-header" style="margin-bottom:0;">
+        <i class="fa-solid fa-microchip-ai" style="width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:1.2rem;"></i>
+        <div>
+          <h2>AI Matching Engine</h2>
+          <p>Real-time performance metrics from the AI recommendation pipeline</p>
+        </div>
+      </div>
+    </div>
+
+    {# Avg Score — ring #}
+    <div class="ai-metric">
+      {% with score=ai_data.avg_score|floatformat:0 %}
+      {% with circ=283 %}
+      {# circumference = 2π×45 ≈ 283; offset = circ − (score/100)×circ #}
+      <div class="score-ring-wrap">
+        <svg width="110" height="110" viewBox="0 0 110 110">
+          <circle class="score-ring-bg" cx="55" cy="55" r="45" fill="none" stroke-width="9"/>
+          <circle class="score-ring-fill" cx="55" cy="55" r="45" fill="none" stroke-width="9"
+            stroke-dasharray="283"
+            stroke-dashoffset="{{ ai_data.avg_score|floatformat:0|add:0 }}"
+            id="scoreRingFill"
+            data-score="{{ ai_data.avg_score|floatformat:1 }}"/>
+        </svg>
+        <div class="score-ring-text">
+          {{ ai_data.avg_score|floatformat:1 }}
+          <small>/ 100</small>
+        </div>
+      </div>
+      {% endwith %}
+      {% endwith %}
+      <div class="ai-metric-label">Average Match Score</div>
+      <div class="ai-metric-badge"><i class="fa-solid fa-star" style="color:#D6A85F;margin-right:4px;"></i> AI Quality Rating</div>
+    </div>
+
+    <div class="ai-divider"></div>
+
+    {# High Match count #}
+    <div class="ai-metric">
+      <div class="ai-metric-icon"><i class="fa-solid fa-bolt"></i></div>
+      <div class="ai-metric-value" id="hmCounter">{{ ai_data.high_match }}</div>
+      <div class="ai-metric-label">High-Match Pairings</div>
+      <div class="ai-metric-badge"><i class="fa-solid fa-circle" style="color:#B8E0D2;margin-right:4px;font-size:.5rem;"></i> Score ≥ 80</div>
+    </div>
+
+    <div class="ai-divider"></div>
+
+    {# Success Rate — large number + sub-bar #}
+    <div class="ai-metric">
+      <div class="ai-metric-icon"><i class="fa-solid fa-trophy"></i></div>
+      <div class="ai-metric-value">{{ ai_data.success_rate|floatformat:1 }}<span style="font-size:1.1rem;font-weight:600;opacity:.7;">%</span></div>
+      <div class="ai-metric-label">AI Success Rate</div>
+      <div class="ai-metric-badge" style="background:rgba(111,167,118,.25);border-color:rgba(111,167,118,.35);color:#B8E0D2;">
+        <i class="fa-solid fa-arrow-trend-up" style="margin-right:4px;"></i> Placement accuracy
+      </div>
+      {# Mini progress track #}
+      <div style="width:120px;height:6px;background:rgba(255,255,255,.15);border-radius:3px;overflow:hidden;margin-top:4px;">
+        <div style="height:100%;width:{{ ai_data.success_rate|floatformat:0 }}%;background:#B8E0D2;border-radius:3px;transition:width 1s;"></div>
+      </div>
+    </div>
+
+  </div>{# /ai-panel #}
+
+</div>{# /analytics-root #}
+
+{# ═══════════════════════════════════════════════ #}
+{#  Inline JS: range buttons + KPI sums             #}
+{# ═══════════════════════════════════════════════ #}
+<script>
+(function () {
+  'use strict';
+
+  /* ── Range pill buttons ─────────────────────── */
+  document.querySelectorAll('#rangeControls .range-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var range = this.dataset.range;
+      document.getElementById('rangeInput').value = range;
+      document.getElementById('rangeForm').submit();
+    });
+  });
+
+  /* ── KPI sums from data attributes ─────────── */
+  function sumTrend(containerId) {
+    var bars = document.querySelectorAll(containerId + ' .bar');
+    var total = 0;
+    bars.forEach(function (b) {
+      total += parseInt(b.dataset.val || '0', 10) || 0;
+    });
+    return total;
+  }
+
+  // Sum each chart section and display in KPI + badge
+  var charts = [
+    { panelQuery: '.chart-panel:nth-child(1)', kpiId: null,       badgeId: 'badgeStudents' },
+    { panelQuery: '.chart-panel:nth-child(2)', kpiId: null,       badgeId: 'badgeRecruiters' },
+    { panelQuery: '.chart-panel:nth-child(3)', kpiId: null,       badgeId: 'badgeCompanies' },
+    { panelQuery: '.chart-panel:nth-child(4)', kpiId: 'kpiJobs',  badgeId: 'badgeJobs' },
+    { panelQuery: '.chart-panel:nth-child(5)', kpiId: null,       badgeId: 'badgeInternships' },
+    { panelQuery: '.chart-panel:nth-child(6)', kpiId: 'kpiApps',  badgeId: 'badgeApps' },
+  ];
+
+  var panels = document.querySelectorAll('.chart-panel');
+  var totals = [];
+  panels.forEach(function (panel, i) {
+    var bars = panel.querySelectorAll('.bar');
+    var total = 0;
+    bars.forEach(function (b) { total += parseInt(b.dataset.val || '0', 10) || 0; });
+    totals.push(total);
+
+    // Update badge
+    var chart = charts[i];
+    if (chart) {
+      if (chart.badgeId) {
+        var badge = document.getElementById(chart.badgeId);
+        if (badge) badge.textContent = total.toLocaleString();
+      }
+      if (chart.kpiId) {
+        var kpi = document.getElementById(chart.kpiId);
+        if (kpi) kpi.textContent = total.toLocaleString();
+      }
+    }
+  });
+
+  // Student KPI (chart panel 0) → #kpiStudents
+  var studentKpi = document.getElementById('kpiStudents');
+  if (studentKpi && totals[0] !== undefined) {
+    studentKpi.textContent = totals[0].toLocaleString();
+  }
+  // Apps KPI (chart panel 5) → #kpiApps
+  var appKpi = document.getElementById('kpiApps');
+  if (appKpi && totals[5] !== undefined) {
+    appKpi.textContent = totals[5].toLocaleString();
+  }
+
+  /* ── Score ring animation ───────────────────── */
+  var ringFill = document.getElementById('scoreRingFill');
+  if (ringFill) {
+    var score   = parseFloat(ringFill.dataset.score) || 0;
+    var circ    = 2 * Math.PI * 45; // ≈ 282.74
+    var offset  = circ - (score / 100) * circ;
+    // Set initial offset to full (hidden) then animate
+    ringFill.style.strokeDasharray  = circ.toFixed(2);
+    ringFill.style.strokeDashoffset = circ.toFixed(2);
+    requestAnimationFrame(function () {
+      setTimeout(function () {
+        ringFill.style.strokeDashoffset = offset.toFixed(2);
+      }, 200);
+    });
+  }
+
+  /* ── Bar entrance animation ─────────────────── */
+  var allBars = document.querySelectorAll('.bar-item .bar');
+  allBars.forEach(function (bar) {
+    var targetH = bar.style.height;
+    bar.style.height = '0%';
+    requestAnimationFrame(function () {
+      setTimeout(function () {
+        bar.style.transition = 'height .65s cubic-bezier(.4,0,.2,1)';
+        bar.style.height = targetH;
+      }, 80);
+    });
+  });
+
+})();
+</script>
+
+{% endblock %}
+

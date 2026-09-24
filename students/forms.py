@@ -101,3 +101,4 @@ class ProjectForm(forms.ModelForm):
             'github_url': forms.URLInput(attrs={'class': 'form-input'}),
             'live_url': forms.URLInput(attrs={'class': 'form-input'}),
         }
+

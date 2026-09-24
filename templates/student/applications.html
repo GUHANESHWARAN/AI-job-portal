@@ -55,15 +55,20 @@
                 </div>
               </td>
               <td>
-                <span class="badge {% if app.status == 'shortlisted' or app.status == 'accepted' %}badge-success{% elif app.status == 'reviewing' or app.status == 'interview' %}badge-warning{% elif app.status == 'rejected' %}badge-danger{% else %}badge-primary{% endif %}" style="font-size: 0.85rem;">
+                <span class="badge {% if app.status == 'shortlisted' or app.status == 'accepted' or app.status == 'selected' %}badge-success{% elif app.status == 'offered' %}badge-warning{% elif app.status == 'reviewing' or app.status == 'interview' %}badge-info{% elif app.status == 'rejected' %}badge-danger{% else %}badge-primary{% endif %}" style="font-size: 0.85rem;">
                   {{ app.get_status_display }}
                 </span>
               </td>
               <td>
-                <div style="display: flex; gap: 0.5rem;">
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
                   <a href="{% url 'job_detail' app.job.id %}" class="btn btn-secondary btn-sm" title="View Job">
                     <i class="fa-solid fa-eye"></i>
                   </a>
+                  {% if app.offer_letter_file %}
+                    <a href="{{ app.offer_letter_file.url }}" target="_blank" class="btn btn-primary btn-sm" title="Download Offer Letter PDF" style="white-space: nowrap;">
+                      <i class="fa-solid fa-file-pdf"></i> Offer Letter
+                    </a>
+                  {% endif %}
                   <a href="{% url 'withdraw_application' app.id %}" class="btn btn-danger btn-sm" title="Withdraw Application" onclick="return confirm('Are you sure you want to withdraw this application?');">
                     <i class="fa-solid fa-trash-can"></i>
                   </a>
@@ -87,3 +92,4 @@
   </div>
 </div>
 {% endblock %}
+

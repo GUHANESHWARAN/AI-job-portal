@@ -1,0 +1,116 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block content %}
+  <section class="detail-header card-surface">
+    <div class="detail-header-main">
+      <span class="avatar large">{{ recruiter.user.first_name|first|default:'R' }}</span>
+      <div>
+        <div class="detail-badge-group">
+          <p class="panel-label">Recruiter Profile</p>
+          {% if recruiter.user.is_active %}
+            <span class="badge badge-soft active"><i class="fa-solid fa-circle-check"></i> Active</span>
+          {% else %}
+            <span class="badge badge-soft danger"><i class="fa-solid fa-circle-xmark"></i> Inactive</span>
+          {% endif %}
+        </div>
+        <h2>{{ recruiter.user.get_full_name|default:recruiter.user.username }}</h2>
+        <p>{{ recruiter.designation|default:'Talent Lead' }} · {{ recruiter.company.name|default:'Independent Recruiter' }}</p>
+      </div>
+    </div>
+    <div class="detail-actions">
+      <a href="{% url 'admin_recruiters' %}" class="secondary-button"><i class="fa-solid fa-arrow-left"></i> Back to List</a>
+      {% if recruiter.company %}
+        <a href="{% url 'admin_company_detail' recruiter.company.id %}" class="secondary-button"><i class="fa-solid fa-building"></i> View Company</a>
+      {% endif %}
+      <form method="post" action="{% url 'admin_toggle_user_status' recruiter.user.id %}" style="display:inline;" onsubmit="return confirm('Are you sure you want to {% if recruiter.user.is_active %}deactivate{% else %}activate{% endif %} this recruiter account?');">
+        {% csrf_token %}
+        {% if recruiter.user.is_active %}
+          <button type="submit" class="danger-button"><i class="fa-solid fa-user-slash"></i> Deactivate</button>
+        {% else %}
+          <button type="submit" class="primary-button"><i class="fa-solid fa-user-check"></i> Activate Account</button>
+        {% endif %}
+      </form>
+    </div>
+  </section>
+
+  <section class="detail-grid">
+    <div class="panel">
+      <div class="panel-header">
+        <div>
+          <p class="panel-label">Account & Role</p>
+          <h3>Profile Overview</h3>
+        </div>
+      </div>
+      <ul class="detail-list">
+        <li><span>Username</span><strong>@{{ recruiter.user.username }}</strong></li>
+        <li><span>Email Address</span><strong>{{ recruiter.user.email }}</strong></li>
+        <li><span>Phone</span><strong>{{ recruiter.user.phone|default:'Not provided' }}</strong></li>
+        <li><span>Company</span><strong>{{ recruiter.company.name|default:'Independent Recruiter' }}</strong></li>
+        <li><span>Designation</span><strong>{{ recruiter.designation|default:'Talent Acquisition' }}</strong></li>
+        <li><span>Department</span><strong>{{ recruiter.department|default:'Human Resources' }}</strong></li>
+        <li><span>Jobs Published</span><strong>{{ jobs.count }}</strong></li>
+        <li><span>Applications Received</span><strong>{{ application_count }}</strong></li>
+        <li><span>Joined Platform</span><strong>{{ recruiter.user.date_joined|date:'d M Y, H:i' }}</strong></li>
+      </ul>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div>
+          <p class="panel-label">Open Positions</p>
+          <h3>Jobs Posted by this Recruiter ({{ jobs.count }})</h3>
+        </div>
+      </div>
+      {% for job in jobs %}
+        <div class="detail-block">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+              <strong>{{ job.title }}</strong>
+              <p>{{ job.get_job_type_display }} · {{ job.location|default:'Remote' }} · {{ job.get_work_mode_display }}</p>
+              <small>Posted on {{ job.created_at|date:'d M Y' }} · {{ job.applications.count }} applicants</small>
+            </div>
+            <span class="badge badge-soft {{ job.status }}">{{ job.get_status_display }}</span>
+          </div>
+        </div>
+      {% empty %}
+        <p class="empty-state-inline">No jobs posted by this recruiter yet.</p>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <div>
+        <p class="panel-label">Candidate Inflow</p>
+        <h3>Applications Received ({{ applications.count }})</h3>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Candidate</th>
+            <th>Job Role</th>
+            <th>AI Match Score</th>
+            <th>Status</th>
+            <th>Applied Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for app in applications %}
+            <tr>
+              <td><strong>{{ app.student.get_full_name|default:app.student.username }}</strong></td>
+              <td>{{ app.job.title }}</td>
+              <td><span class="match-pill">{{ app.overall_match_score|floatformat:0 }}%</span></td>
+              <td><span class="badge badge-soft {{ app.status }}">{{ app.get_status_display }}</span></td>
+              <td>{{ app.applied_at|date:'d M Y' }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5" class="empty-cell">No candidate applications for this recruiter's jobs yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+{% endblock %}
+

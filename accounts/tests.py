@@ -1,9 +1,11 @@
+from django.test import TestCase
 from django.test import TestCase, Client
 from django.urls import reverse
 from accounts.models import User
 from jobs.models import Job
 from companies.models import Company
 
+# Create your tests here.
 
 class WebFlowTestCase(TestCase):
     def setUp(self):

@@ -10,6 +10,7 @@ from accounts.views import home_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('admin-dashboard/', include('admin_dashboard.urls')),
     path('', home_view, name='home'),
     path('accounts/', include('accounts.urls')),
     path('student/', include('students.urls')),

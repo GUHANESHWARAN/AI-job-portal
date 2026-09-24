@@ -1,0 +1,803 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Platform Reports — Admin Dashboard{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+<style>
+  /* ── Layout ────────────────────────────────────────────────── */
+  .reports-wrap {
+    padding: 2rem 2.4rem 3.5rem;
+    max-width: 1300px;
+    margin: 0 auto;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #24302D;
+  }
+
+  /* ── Page Header ───────────────────────────────────────────── */
+  .page-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 2.4rem;
+    flex-wrap: wrap;
+  }
+  .page-header-text {}
+  .page-header-text h1 {
+    font-size: 1.85rem;
+    font-weight: 700;
+    color: #24302D;
+    margin: 0 0 .25rem;
+    letter-spacing: -.4px;
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+  }
+  .page-header-text h1 .header-icon {
+    width: 2.1rem;
+    height: 2.1rem;
+    background: linear-gradient(135deg, #4F46E5, #0EA5E9);
+    border-radius: .55rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: .9rem;
+    flex-shrink: 0;
+  }
+  .page-header-text p {
+    margin: 0;
+    font-size: .92rem;
+    color: #71807B;
+  }
+  .header-badge {
+    background: #EAF3EE;
+    color: #4F46E5;
+    font-size: .75rem;
+    font-weight: 600;
+    padding: .3rem .75rem;
+    border-radius: 999px;
+    border: 1px solid #C8DDD3;
+    white-space: nowrap;
+    align-self: center;
+  }
+
+  /* ── Section Labels ─────────────────────────────────────────── */
+  .section-label {
+    font-size: .7rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: #71807B;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #E4E9E5;
+  }
+
+  /* ── Export Buttons Row ─────────────────────────────────────── */
+  .export-section {
+    margin-bottom: 2.4rem;
+  }
+  .export-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem;
+  }
+  .export-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .6rem;
+    padding: .65rem 1.15rem;
+    border-radius: .6rem;
+    font-size: .85rem;
+    font-weight: 600;
+    text-decoration: none;
+    border: 1.5px solid transparent;
+    cursor: pointer;
+    transition: background .18s, border-color .18s, transform .13s, box-shadow .18s;
+    white-space: nowrap;
+    position: relative;
+    overflow: hidden;
+  }
+  .export-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,.08);
+    opacity: 0;
+    transition: opacity .18s;
+  }
+  .export-btn:hover::before { opacity: 1; }
+
+  .export-btn-students {
+    background: linear-gradient(135deg, #4F46E5, #3d6057);
+    color: #fff;
+    border-color: #3d6057;
+    box-shadow: 0 2px 8px rgba(79,70,229,.25);
+  }
+  .export-btn-students:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(79,70,229,.35);
+  }
+
+  .export-btn-recruiters {
+    background: linear-gradient(135deg, #0EA5E9, #6b9175);
+    color: #fff;
+    border-color: #6b9175;
+    box-shadow: 0 2px 8px rgba(14,165,233,.25);
+  }
+  .export-btn-recruiters:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(14,165,233,.35);
+  }
+
+  .export-btn-companies {
+    background: linear-gradient(135deg, #9B8AFB, #7b68ee);
+    color: #fff;
+    border-color: #7b68ee;
+    box-shadow: 0 2px 8px rgba(155,138,251,.25);
+  }
+  .export-btn-companies:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(155,138,251,.35);
+  }
+
+  .export-btn-jobs {
+    background: linear-gradient(135deg, #D6A85F, #c0913e);
+    color: #fff;
+    border-color: #c0913e;
+    box-shadow: 0 2px 8px rgba(214,168,95,.25);
+  }
+  .export-btn-jobs:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(214,168,95,.35);
+  }
+
+  .export-btn-applications {
+    background: linear-gradient(135deg, #6FA776, #559360);
+    color: #fff;
+    border-color: #559360;
+    box-shadow: 0 2px 8px rgba(111,167,118,.25);
+  }
+  .export-btn-applications:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(111,167,118,.35);
+  }
+
+  .export-btn .btn-icon {
+    width: 1.7rem;
+    height: 1.7rem;
+    background: rgba(255,255,255,.18);
+    border-radius: .35rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .8rem;
+    flex-shrink: 0;
+  }
+
+  /* ── Panels (cards) ─────────────────────────────────────────── */
+  .panel {
+    background: #fff;
+    border: 1px solid #E4E9E5;
+    border-radius: 1rem;
+    padding: 1.6rem;
+    box-shadow: 0 1px 4px rgba(36,48,45,.04), 0 4px 16px rgba(36,48,45,.05);
+  }
+  .panel-title {
+    font-size: .95rem;
+    font-weight: 700;
+    color: #24302D;
+    margin: 0 0 .3rem;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }
+  .panel-title .pticon {
+    width: 1.7rem;
+    height: 1.7rem;
+    border-radius: .4rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .75rem;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .panel-subtitle {
+    font-size: .8rem;
+    color: #71807B;
+    margin: 0 0 1.4rem;
+  }
+  .panel-divider {
+    height: 1px;
+    background: #E4E9E5;
+    margin: 1.2rem 0;
+  }
+
+  /* ── Executive Summary Stats Grid ───────────────────────────── */
+  .exec-section {
+    margin-bottom: 2.4rem;
+  }
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 1rem;
+  }
+  @media (max-width: 1100px) { .stat-grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 680px)  { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
+
+  .stat-card {
+    background: #F7F7F2;
+    border: 1px solid #E4E9E5;
+    border-radius: .8rem;
+    padding: 1.1rem 1rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: box-shadow .2s, transform .15s;
+  }
+  .stat-card:hover {
+    box-shadow: 0 6px 20px rgba(79,70,229,.12);
+    transform: translateY(-2px);
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 1rem 1rem 0 0;
+  }
+  .stat-card.c-teal::before    { background: #4F46E5; }
+  .stat-card.c-sage::before    { background: #0EA5E9; }
+  .stat-card.c-lavender::before{ background: #9B8AFB; }
+  .stat-card.c-warning::before { background: #D6A85F; }
+  .stat-card.c-mint::before    { background: #B8E0D2; }
+  .stat-card.c-success::before { background: #6FA776; }
+
+  .stat-icon {
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: .55rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .85rem;
+    margin-bottom: .5rem;
+  }
+  .stat-card.c-teal    .stat-icon { background: rgba(79,70,229,.12);  color: #4F46E5; }
+  .stat-card.c-sage    .stat-icon { background: rgba(14,165,233,.15); color: #6b9175; }
+  .stat-card.c-lavender.stat-icon { background: rgba(155,138,251,.12); color: #7b68ee; }
+  .stat-card.c-warning .stat-icon { background: rgba(214,168,95,.12);  color: #c0913e; }
+  .stat-card.c-mint    .stat-icon { background: rgba(184,224,210,.2);  color: #4b9b83; }
+  .stat-card.c-success .stat-icon { background: rgba(111,167,118,.12); color: #559360; }
+
+  .stat-value {
+    font-size: 1.6rem;
+    font-weight: 800;
+    line-height: 1;
+    color: #24302D;
+    margin-bottom: .3rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-label {
+    font-size: .72rem;
+    font-weight: 600;
+    color: #71807B;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+  }
+
+  /* ── Two-column grid ────────────────────────────────────────── */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2.4rem;
+  }
+  @media (max-width: 820px) { .two-col { grid-template-columns: 1fr; } }
+
+  /* ── Score Ring ─────────────────────────────────────────────── */
+  .ring-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem 0 1.4rem;
+  }
+  .ring-svg-wrap {
+    position: relative;
+    width: 140px;
+    height: 140px;
+    margin-bottom: .9rem;
+  }
+  .ring-svg-wrap svg {
+    transform: rotate(-90deg);
+  }
+  .ring-track {
+    fill: none;
+    stroke: #E4E9E5;
+    stroke-width: 10;
+  }
+  .ring-fill {
+    fill: none;
+    stroke: url(#ringGrad);
+    stroke-width: 10;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1);
+  }
+  .ring-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .ring-pct {
+    font-size: 1.85rem;
+    font-weight: 800;
+    color: #24302D;
+    line-height: 1;
+  }
+  .ring-sub {
+    font-size: .68rem;
+    font-weight: 600;
+    color: #71807B;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-top: .15rem;
+  }
+  .ring-caption {
+    font-size: .78rem;
+    color: #71807B;
+    text-align: center;
+  }
+  .ring-caption strong {
+    color: #4F46E5;
+  }
+
+  /* ── Insight List ───────────────────────────────────────────── */
+  .insight-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .6rem;
+  }
+  .insight-item {
+    display: flex;
+    align-items: center;
+    gap: .9rem;
+    padding: .75rem 1rem;
+    background: #F7F7F2;
+    border: 1px solid #E4E9E5;
+    border-radius: .65rem;
+    transition: background .15s, border-color .15s;
+  }
+  .insight-item:hover {
+    background: #EAF3EE;
+    border-color: #C8DDD3;
+  }
+  .insight-dot {
+    width: .55rem;
+    height: .55rem;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .insight-icon {
+    width: 2rem;
+    height: 2rem;
+    border-radius: .45rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .75rem;
+    flex-shrink: 0;
+  }
+  .insight-meta { flex: 1; min-width: 0; }
+  .insight-key {
+    font-size: .82rem;
+    font-weight: 600;
+    color: #24302D;
+  }
+  .insight-desc {
+    font-size: .72rem;
+    color: #71807B;
+    margin-top: .05rem;
+  }
+  .insight-val {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #24302D;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+  .insight-chip {
+    font-size: .68rem;
+    font-weight: 600;
+    padding: .18rem .55rem;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .chip-applied     { background: rgba(79,70,229,.12);  color: #4F46E5; }
+  .chip-shortlisted { background: rgba(214,168,95,.15);  color: #c0913e; }
+  .chip-hired       { background: rgba(111,167,118,.15); color: #559360; }
+  .chip-rejected    { background: rgba(212,119,119,.12); color: #b85555; }
+  .chip-pending     { background: rgba(155,138,251,.12); color: #7b68ee; }
+  .chip-avg         { background: rgba(184,224,210,.2);  color: #4b9b83; }
+
+  /* platform health icons */
+  .ph-avg-apps  { background: rgba(184,224,210,.2);  color: #4b9b83; }
+  .ph-match     { background: rgba(155,138,251,.12); color: #7b68ee; }
+  .ph-pending   { background: rgba(214,168,95,.15);  color: #c0913e; }
+  .ph-rejected  { background: rgba(212,119,119,.12); color: #b85555; }
+
+  .funnel-icon  { background: rgba(79,70,229,.12);  color: #4F46E5; }
+  .funnel-short { background: rgba(214,168,95,.15);  color: #c0913e; }
+  .funnel-hired { background: rgba(111,167,118,.15); color: #559360; }
+
+  /* ── Note Banner ────────────────────────────────────────────── */
+  .note-banner {
+    display: flex;
+    align-items: center;
+    gap: .9rem;
+    background: #F0F7F4;
+    border: 1px solid #C8DDD3;
+    border-left: 4px solid #4F46E5;
+    border-radius: .65rem;
+    padding: .85rem 1.1rem;
+    font-size: .82rem;
+    color: #4F46E5;
+    font-weight: 500;
+  }
+  .note-banner i { font-size: .95rem; flex-shrink: 0; }
+
+  /* ── Animations ─────────────────────────────────────────────── */
+  @keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .anim-1 { animation: fadeSlideUp .45s ease both; }
+  .anim-2 { animation: fadeSlideUp .45s .08s ease both; }
+  .anim-3 { animation: fadeSlideUp .45s .16s ease both; }
+  .anim-4 { animation: fadeSlideUp .45s .24s ease both; }
+  .anim-5 { animation: fadeSlideUp .45s .32s ease both; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="reports-wrap">
+
+  <!-- ══ Page Header ══════════════════════════════════════════════ -->
+  <div class="page-header anim-1">
+    <div class="page-header-text">
+      <h1>
+        <span class="header-icon"><i class="fa-solid fa-chart-bar"></i></span>
+        Platform Reports
+      </h1>
+      <p>Export and review performance data</p>
+    </div>
+    <span class="header-badge"><i class="fa-regular fa-clock" style="margin-right:.35rem;"></i>Live Data</span>
+  </div>
+
+  <!-- ══ Export Downloads ══════════════════════════════════════════ -->
+  <div class="export-section anim-2">
+    <div class="section-label"><i class="fa-solid fa-file-arrow-down"></i> CSV Exports</div>
+    <div class="export-grid">
+
+      <a href="?export=students" class="export-btn export-btn-students">
+        <span class="btn-icon"><i class="fa-solid fa-download"></i></span>
+        Export Students CSV
+      </a>
+
+      <a href="?export=recruiters" class="export-btn export-btn-recruiters">
+        <span class="btn-icon"><i class="fa-solid fa-download"></i></span>
+        Export Recruiters CSV
+      </a>
+
+      <a href="?export=companies" class="export-btn export-btn-companies">
+        <span class="btn-icon"><i class="fa-solid fa-download"></i></span>
+        Export Companies CSV
+      </a>
+
+      <a href="?export=jobs" class="export-btn export-btn-jobs">
+        <span class="btn-icon"><i class="fa-solid fa-download"></i></span>
+        Export Jobs CSV
+      </a>
+
+      <a href="?export=applications" class="export-btn export-btn-applications">
+        <span class="btn-icon"><i class="fa-solid fa-download"></i></span>
+        Export Applications CSV
+      </a>
+
+    </div>
+  </div>
+
+  <!-- ══ Executive Summary ════════════════════════════════════════ -->
+  <div class="exec-section anim-3">
+    <div class="section-label"><i class="fa-solid fa-layer-group"></i> Executive Summary</div>
+    <div class="panel" style="padding: 1.4rem;">
+      <div class="stat-grid">
+
+        <div class="stat-card c-teal">
+          <div class="stat-icon"><i class="fa-solid fa-user-graduate"></i></div>
+          <div class="stat-value">{{ report.students|default:"0" }}</div>
+          <div class="stat-label">Students</div>
+        </div>
+
+        <div class="stat-card c-sage">
+          <div class="stat-icon"><i class="fa-solid fa-user-tie"></i></div>
+          <div class="stat-value">{{ report.recruiters|default:"0" }}</div>
+          <div class="stat-label">Recruiters</div>
+        </div>
+
+        <div class="stat-card c-lavender">
+          <div class="stat-icon"><i class="fa-solid fa-building"></i></div>
+          <div class="stat-value">{{ report.companies|default:"0" }}</div>
+          <div class="stat-label">Companies</div>
+        </div>
+
+        <div class="stat-card c-warning">
+          <div class="stat-icon"><i class="fa-solid fa-briefcase"></i></div>
+          <div class="stat-value">{{ report.jobs|default:"0" }}</div>
+          <div class="stat-label">Open Jobs</div>
+        </div>
+
+        <div class="stat-card c-mint">
+          <div class="stat-icon"><i class="fa-solid fa-laptop-code"></i></div>
+          <div class="stat-value">{{ report.internships|default:"0" }}</div>
+          <div class="stat-label">Internships</div>
+        </div>
+
+        <div class="stat-card c-success">
+          <div class="stat-icon"><i class="fa-solid fa-file-signature"></i></div>
+          <div class="stat-value">{{ report.applications|default:"0" }}</div>
+          <div class="stat-label">Applications</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Two-column: Funnel + Health ══════════════════════════════ -->
+  <div class="two-col anim-4">
+
+    <!-- Application Funnel -->
+    <div class="panel">
+      <div class="panel-title">
+        <span class="pticon" style="background: linear-gradient(135deg,#4F46E5,#0EA5E9);">
+          <i class="fa-solid fa-filter"></i>
+        </span>
+        Application Funnel
+      </div>
+      <p class="panel-subtitle">End-to-end conversion from applied to hired</p>
+
+      <!-- Score ring -->
+      <div class="ring-wrapper">
+        <div class="ring-svg-wrap">
+          <svg width="140" height="140" viewBox="0 0 140 140" aria-hidden="true">
+            <defs>
+              <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%"   stop-color="#4F46E5"/>
+                <stop offset="100%" stop-color="#0EA5E9"/>
+              </linearGradient>
+            </defs>
+            <circle class="ring-track" cx="70" cy="70" r="55"/>
+            <circle class="ring-fill"  cx="70" cy="70" r="55"
+              stroke-dasharray="345.4"
+              stroke-dashoffset="345.4"
+              data-pct="{{ report.conversion_rate|default:'0' }}"
+              id="ringArc"/>
+          </svg>
+          <div class="ring-center">
+            <span class="ring-pct" id="ringLabel">0%</span>
+            <span class="ring-sub">Conversion</span>
+          </div>
+        </div>
+        <div class="ring-caption">
+          <strong>{{ report.conversion_rate|default:"0" }}%</strong> of applicants convert to a hire
+        </div>
+      </div>
+
+      <div class="panel-divider"></div>
+
+      <ul class="insight-list">
+        <li class="insight-item">
+          <span class="insight-icon funnel-icon"><i class="fa-solid fa-paper-plane"></i></span>
+          <div class="insight-meta">
+            <div class="insight-key">Applied</div>
+            <div class="insight-desc">Total applications submitted</div>
+          </div>
+          <span class="insight-val">{{ report.applied|default:"0" }}</span>
+          <span class="insight-chip chip-applied">Applied</span>
+        </li>
+        <li class="insight-item">
+          <span class="insight-icon funnel-short"><i class="fa-solid fa-list-check"></i></span>
+          <div class="insight-meta">
+            <div class="insight-key">Shortlisted</div>
+            <div class="insight-desc">Candidates moved to review</div>
+          </div>
+          <span class="insight-val">{{ report.shortlisted|default:"0" }}</span>
+          <span class="insight-chip chip-shortlisted">Shortlisted</span>
+        </li>
+        <li class="insight-item">
+          <span class="insight-icon funnel-hired"><i class="fa-solid fa-trophy"></i></span>
+          <div class="insight-meta">
+            <div class="insight-key">Hired</div>
+            <div class="insight-desc">Final offers accepted</div>
+          </div>
+          <span class="insight-val">{{ report.hired|default:"0" }}</span>
+          <span class="insight-chip chip-hired">Hired</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Platform Health -->
+    <div class="panel">
+      <div class="panel-title">
+        <span class="pticon" style="background: linear-gradient(135deg,#9B8AFB,#7b68ee);">
+          <i class="fa-solid fa-heart-pulse"></i>
+        </span>
+        Platform Health
+      </div>
+      <p class="panel-subtitle">Key operational metrics and quality signals</p>
+
+      <ul class="insight-list" style="margin-top:.4rem;">
+        <li class="insight-item">
+          <span class="insight-icon ph-avg-apps"><i class="fa-solid fa-chart-simple"></i></span>
+          <div class="insight-meta">
+            <div class="insight-key">Avg Applications / Job</div>
+            <div class="insight-desc">Demand signal per listing</div>
+          </div>
+          <span class="insight-val">{{ report.avg_applications_per_job|default:"0" }}</span>
+          <span class="insight-chip chip-avg">Avg</span>
+        </li>
+        <li class="insight-item">
+          <span class="insight-icon ph-match"><i class="fa-solid fa-star-half-stroke"></i></span>
+          <div class="insight-meta">
+            <div class="insight-key">Avg Match Score</div>
+            <div class="insight-desc">AI relevance quality index</div>
+          </div>
+          <span class="insight-val">{{ report.avg_match_score|default:"0" }}%</span>
+          <span class="insight-chip chip-avg">Score</span>
+        </li>
+        <li class="insight-item">
+          <span class="insight-icon ph-pending"><i class="fa-solid fa-clock-rotate-left"></i></span>
+          <div class="insight-meta">
+            <div class="insight-key">Pending Reviews</div>
+            <div class="insight-desc">Applications awaiting decision</div>
+          </div>
+          <span class="insight-val">{{ report.pending_reviews|default:"0" }}</span>
+          <span class="insight-chip chip-pending">Pending</span>
+        </li>
+        <li class="insight-item">
+          <span class="insight-icon ph-rejected"><i class="fa-solid fa-circle-xmark"></i></span>
+          <div class="insight-meta">
+            <div class="insight-key">Rejected</div>
+            <div class="insight-desc">Applications not progressed</div>
+          </div>
+          <span class="insight-val">{{ report.rejected|default:"0" }}</span>
+          <span class="insight-chip chip-rejected">Rejected</span>
+        </li>
+      </ul>
+
+      <!-- mini divider + quick ratio -->
+      <div class="panel-divider"></div>
+      <div style="display:flex;gap:1rem;flex-wrap:wrap;">
+        <div style="flex:1;background:#F7F7F2;border:1px solid #E4E9E5;border-radius:.65rem;padding:.8rem 1rem;text-align:center;min-width:100px;">
+          <div style="font-size:1.2rem;font-weight:800;color:#4F46E5;">{{ report.hired|default:"0" }}</div>
+          <div style="font-size:.7rem;font-weight:600;color:#71807B;text-transform:uppercase;letter-spacing:.05em;margin-top:.2rem;">Total Hired</div>
+        </div>
+        <div style="flex:1;background:#F7F7F2;border:1px solid #E4E9E5;border-radius:.65rem;padding:.8rem 1rem;text-align:center;min-width:100px;">
+          <div style="font-size:1.2rem;font-weight:800;color:#9B8AFB;">{{ report.shortlisted|default:"0" }}</div>
+          <div style="font-size:.7rem;font-weight:600;color:#71807B;text-transform:uppercase;letter-spacing:.05em;margin-top:.2rem;">Shortlisted</div>
+        </div>
+        <div style="flex:1;background:#F7F7F2;border:1px solid #E4E9E5;border-radius:.65rem;padding:.8rem 1rem;text-align:center;min-width:100px;">
+          <div style="font-size:1.2rem;font-weight:800;color:#D47777;">{{ report.rejected|default:"0" }}</div>
+          <div style="font-size:.7rem;font-weight:600;color:#71807B;text-transform:uppercase;letter-spacing:.05em;margin-top:.2rem;">Rejected</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══ Note Banner ══════════════════════════════════════════════ -->
+  <div class="anim-5">
+    <div class="note-banner">
+      <i class="fa-solid fa-circle-info"></i>
+      <span>CSV exports include all records at time of download. Data reflects the current state of the platform.</span>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  (function () {
+    'use strict';
+
+    /* ── Animated Score Ring ── */
+    const arc  = document.getElementById('ringArc');
+    const lbl  = document.getElementById('ringLabel');
+    if (arc && lbl) {
+      const pct        = parseFloat(arc.dataset.pct) || 0;
+      const circumf    = 2 * Math.PI * 55;          // ≈ 345.4
+      const targetOffset = circumf - (pct / 100) * circumf;
+
+      // Give the browser a frame to register the initial dashoffset = circumf
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          arc.style.strokeDashoffset = targetOffset;
+        });
+      });
+
+      // Animate the label counter
+      const duration = 1200;
+      const start    = performance.now();
+      function tick(now) {
+        const elapsed  = now - start;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased    = 1 - Math.pow(1 - progress, 3);      // ease-out cubic
+        const current  = Math.round(eased * pct);
+        lbl.textContent = current + '%';
+        if (progress < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }
+
+    /* ── Stat card counter animation ── */
+    document.querySelectorAll('.stat-value').forEach(function (el) {
+      const target = parseInt(el.textContent.replace(/[^0-9]/g, ''), 10);
+      if (!target || isNaN(target)) return;
+      const duration = 900;
+      const start    = performance.now();
+      el.textContent = '0';
+      function tick(now) {
+        const elapsed  = now - start;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased    = 1 - Math.pow(1 - progress, 3);
+        el.textContent = Math.round(eased * target).toLocaleString();
+        if (progress < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    });
+
+    /* ── Export button ripple ── */
+    document.querySelectorAll('.export-btn').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        const ripple = document.createElement('span');
+        ripple.style.cssText = [
+          'position:absolute',
+          'border-radius:50%',
+          'background:rgba(255,255,255,0.35)',
+          'width:10px', 'height:10px',
+          'pointer-events:none',
+          'transform:scale(0)',
+          'transition:transform .5s ease,opacity .5s ease',
+          'opacity:1'
+        ].join(';');
+        const rect = btn.getBoundingClientRect();
+        ripple.style.left = (e.clientX - rect.left - 5) + 'px';
+        ripple.style.top  = (e.clientY - rect.top  - 5) + 'px';
+        btn.appendChild(ripple);
+        requestAnimationFrame(() => {
+          ripple.style.transform = 'scale(28)';
+          ripple.style.opacity   = '0';
+        });
+        setTimeout(() => ripple.remove(), 550);
+      });
+    });
+  })();
+</script>
+{% endblock %}
+

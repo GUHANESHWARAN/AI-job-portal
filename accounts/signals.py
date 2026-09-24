@@ -12,3 +12,4 @@ def create_or_update_user_profile(sender, instance, created, **kwargs):
             StudentProfile.objects.get_or_create(user=instance)
         elif instance.role == User.ROLE_RECRUITER:
             RecruiterProfile.objects.get_or_create(user=instance)
+

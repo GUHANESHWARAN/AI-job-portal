@@ -7,3 +7,4 @@ urlpatterns = [
     path('<int:pk>/', views.job_detail_view, name='job_detail'),
     path('api/extract-skills/', views.extract_skills_preview_api, name='api_extract_skills'),
 ]
+

@@ -77,27 +77,49 @@ document.addEventListener('DOMContentLoaded', () => {
     select.addEventListener('change', (e) => {
       const appId = e.target.dataset.appId;
       const newStatus = e.target.value;
+      const csrfToken = getCookie('csrftoken') ||
+                        document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+
+      e.target.disabled = true;
 
       fetch(`/recruiter/api/applications/${appId}/status/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-CSRFToken': getCookie('csrftoken')
+          'X-CSRFToken': csrfToken
         },
         body: JSON.stringify({ status: newStatus })
       })
-      .then(res => res.json())
+      .then(async res => {
+        const isJson = res.headers.get('content-type')?.includes('application/json');
+        const data = isJson ? await res.json() : null;
+        if (!res.ok) {
+          const errorMsg = data?.error || (res.status === 403 ? 'CSRF verification failed or unauthorized.' : `Server error (HTTP ${res.status})`);
+          throw new Error(errorMsg);
+        }
+        return data;
+      })
       .then(data => {
-        if (data.success) {
+        if (data && data.success) {
           e.target.style.borderColor = '#10b981';
           setTimeout(() => {
             e.target.style.borderColor = '';
           }, 1500);
+          if (data.status_changed && data.email_sent) {
+            console.log(`Status updated to ${data.status_display}; email sent to ${data.student_email}`);
+          }
         } else {
-          alert('Error updating status: ' + (data.error || 'Server error'));
+          alert('Error updating status: ' + (data?.error || 'Server error'));
         }
       })
-      .catch(err => console.error('Error updating status:', err));
+      .catch(err => {
+        console.error('Error updating status:', err);
+        alert('Failed to update status: ' + err.message);
+      })
+      .finally(() => {
+        e.target.disabled = false;
+      });
     });
   });
 });
+

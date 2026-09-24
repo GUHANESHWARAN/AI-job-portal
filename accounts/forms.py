@@ -6,16 +6,17 @@ from .models import User
 
 class UserRegistrationForm(UserCreationForm):
     first_name = forms.CharField(max_length=50, required=True, widget=forms.TextInput(attrs={
-        'class': 'form-input', 'placeholder': 'First Name'
+        'class': 'form-input', 'placeholder': 'First Name', 'autocomplete': 'given-name',
     }))
     last_name = forms.CharField(max_length=50, required=True, widget=forms.TextInput(attrs={
-        'class': 'form-input', 'placeholder': 'Last Name'
+        'class': 'form-input', 'placeholder': 'Last Name', 'autocomplete': 'family-name',
     }))
     email = forms.EmailField(required=True, widget=forms.EmailInput(attrs={
-        'class': 'form-input', 'placeholder': 'Email Address'
+        'class': 'form-input', 'placeholder': 'you@example.com',
+        'autocomplete': 'email', 'id': 'id_email',
     }))
     phone = forms.CharField(max_length=20, required=False, widget=forms.TextInput(attrs={
-        'class': 'form-input', 'placeholder': 'Phone Number'
+        'class': 'form-input', 'placeholder': '+91 98765 43210', 'autocomplete': 'tel',
     }))
     role = forms.ChoiceField(
         choices=(
@@ -32,21 +33,37 @@ class UserRegistrationForm(UserCreationForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['username'].widget.attrs.update({'class': 'form-input', 'placeholder': 'Username'})
-        self.fields['password_1'] = self.fields.get('password_1')
-        self.fields['password_2'] = self.fields.get('password_2')
-        if 'password_1' in self.fields:
-            self.fields['password_1'].widget.attrs.update({'class': 'form-input', 'placeholder': 'Password (min. 6 chars)'})
-        if 'password_2' in self.fields:
-            self.fields['password_2'].widget.attrs.update({'class': 'form-input', 'placeholder': 'Confirm Password'})
+        self.fields['username'].widget.attrs.update({
+            'class': 'form-input', 'placeholder': 'e.g. john_doe123', 'autocomplete': 'username',
+        })
+        if 'password1' in self.fields:
+            self.fields['password1'].widget.attrs.update({
+                'class': 'form-input', 'placeholder': 'Min. 8 characters', 'autocomplete': 'new-password',
+            })
+        if 'password2' in self.fields:
+            self.fields['password2'].widget.attrs.update({
+                'class': 'form-input', 'placeholder': 'Repeat your password', 'autocomplete': 'new-password',
+            })
+
+    def clean_email(self):
+        """Ensure each email address is used by exactly one account."""
+        email = self.cleaned_data.get('email', '').strip().lower()
+        if User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError(
+                "This email address is already registered. "
+                "Please sign in or use a different email."
+            )
+        return email
 
 
 class UserLoginForm(forms.Form):
     username = forms.CharField(widget=forms.TextInput(attrs={
-        'class': 'form-input', 'placeholder': 'Username or Email'
+        'class': 'form-input', 'placeholder': 'Username or Email',
+        'autocomplete': 'username',
     }))
     password = forms.CharField(widget=forms.PasswordInput(attrs={
-        'class': 'form-input', 'placeholder': 'Password'
+        'class': 'form-input', 'placeholder': 'Password',
+        'autocomplete': 'current-password',
     }))
 
     def clean(self):
@@ -59,7 +76,7 @@ class UserLoginForm(forms.Form):
             user = authenticate(username=username, password=password)
             if not user:
                 try:
-                    user_obj = User.objects.get(email=username)
+                    user_obj = User.objects.get(email__iexact=username)
                     user = authenticate(username=user_obj.username, password=password)
                 except User.DoesNotExist:
                     pass

@@ -1,0 +1,169 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block content %}
+  <section class="page-toolbar">
+    <form method="get" class="toolbar-form">
+      <div class="search-input-group">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="search" name="q" value="{{ query }}" placeholder="Search jobs by title, company, skills, or city" />
+      </div>
+      <div class="filter-group">
+        <select name="company_id" onchange="this.form.submit()">
+          <option value="">All Companies</option>
+          {% for c in companies %}
+            <option value="{{ c.id }}" {% if company_id == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="filter-group">
+        <select name="status" onchange="this.form.submit()">
+          <option value="">All Statuses</option>
+          {% for val, label in status_choices %}
+            <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="filter-group">
+        <select name="type" onchange="this.form.submit()">
+          <option value="">All Types</option>
+          {% for val, label in type_choices %}
+            <option value="{{ val }}" {% if type_filter == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="filter-group">
+        <select name="mode" onchange="this.form.submit()">
+          <option value="">All Modes</option>
+          {% for val, label in mode_choices %}
+            <option value="{{ val }}" {% if mode_filter == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="primary-button"><i class="fa-solid fa-filter"></i> Filter</button>
+      {% if query or status_filter or type_filter or mode_filter or company_id %}
+        <a href="{% url 'admin_jobs' %}" class="secondary-button"><i class="fa-solid fa-rotate-left"></i> Reset</a>
+      {% endif %}
+    </form>
+    <div class="toolbar-count">
+      <span>Total: <strong>{{ total_count }}</strong></span>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <div>
+        <p class="panel-label">Job Requisitions</p>
+        <h3>All Employment Opportunities</h3>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Job Title</th>
+            <th>Company</th>
+            <th>Job Type</th>
+            <th>Location</th>
+            <th>Experience</th>
+            <th>Required Skills</th>
+            <th>Applicants</th>
+            <th>Status</th>
+            <th>Posted Date</th>
+            <th style="text-align: right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for job in jobs %}
+            <tr>
+              <td>
+                <strong>{{ job.title }}</strong>
+                {% if job.recruiter %}
+                  <small style="display: block; color: var(--muted);">By {{ job.recruiter.get_full_name|default:job.recruiter.username }}</small>
+                {% endif %}
+              </td>
+              <td>
+                {% if job.company %}
+                  <a href="{% url 'admin_company_detail' job.company.id %}" class="table-link">{{ job.company.name }}</a>
+                {% else %}
+                  <span class="muted-text">Independent</span>
+                {% endif %}
+              </td>
+              <td>{{ job.get_job_type_display }}</td>
+              <td>{{ job.location|default:'Remote' }} <small>({{ job.get_work_mode_display }})</small></td>
+              <td>{{ job.get_experience_level_display }}</td>
+              <td>
+                {% if job.get_all_skills %}
+                  <div class="skills-preview">
+                    {% for skill in job.get_all_skills|slice:":3" %}
+                      <span class="skill-tag">{{ skill }}</span>
+                    {% endfor %}
+                    {% if job.get_all_skills|length > 3 %}
+                      <span class="skill-tag more">+{{ job.get_all_skills|length|add:"-3" }}</span>
+                    {% endif %}
+                  </div>
+                {% else %}
+                  <span class="muted-text">None</span>
+                {% endif %}
+              </td>
+              <td><strong>{{ job.applications.count }}</strong></td>
+              <td>
+                {% if job.status == 'active' %}
+                  <span class="badge badge-soft active"><i class="fa-solid fa-circle-check"></i> Active</span>
+                {% else %}
+                  <span class="badge badge-soft danger"><i class="fa-solid fa-circle-xmark"></i> {{ job.get_status_display }}</span>
+                {% endif %}
+              </td>
+              <td>{{ job.created_at|date:'d M Y' }}</td>
+              <td style="text-align: right;">
+                <div class="action-buttons">
+                  <a class="table-action" href="{% url 'job_detail' job.id %}" target="_blank">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Inspect
+                  </a>
+                  <form method="post" action="{% url 'admin_toggle_job_status' job.id %}" style="display:inline;" onsubmit="return confirm('Toggle status for {{ job.title }}?');">
+                    {% csrf_token %}
+                    {% if job.status == 'active' %}
+                      <button type="submit" class="table-action danger" title="Close Opportunity">
+                        <i class="fa-solid fa-lock"></i> Close
+                      </button>
+                    {% else %}
+                      <button type="submit" class="table-action success" title="Activate Opportunity">
+                        <i class="fa-solid fa-lock-open"></i> Open
+                      </button>
+                    {% endif %}
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="10" class="empty-cell">
+                <div class="empty-state">
+                  <i class="fa-solid fa-briefcase"></i>
+                  <h4>No jobs found</h4>
+                  <p>Try adjusting your search criteria or resetting filters.</p>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if page_obj.has_other_pages %}
+      <div class="pagination-bar">
+        <span class="pagination-info">Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        <div class="pagination-nav">
+          {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if mode_filter %}&mode={{ mode_filter }}{% endif %}{% if company_id %}&company_id={{ company_id }}{% endif %}" class="page-link">&laquo; Prev</a>
+          {% endif %}
+          <span class="page-current">{{ page_obj.number }}</span>
+          {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if mode_filter %}&mode={{ mode_filter }}{% endif %}{% if company_id %}&company_id={{ company_id }}{% endif %}" class="page-link">Next &raquo;</a>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}
+

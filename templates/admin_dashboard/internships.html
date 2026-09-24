@@ -1,0 +1,146 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block content %}
+  <section class="page-toolbar">
+    <form method="get" class="toolbar-form">
+      <div class="search-input-group">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="search" name="q" value="{{ query }}" placeholder="Search internships by role, company, or skills" />
+      </div>
+      <div class="filter-group">
+        <select name="status" onchange="this.form.submit()">
+          <option value="">All Statuses</option>
+          {% for val, label in status_choices %}
+            <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="filter-group">
+        <select name="mode" onchange="this.form.submit()">
+          <option value="">All Work Modes</option>
+          {% for val, label in mode_choices %}
+            <option value="{{ val }}" {% if mode_filter == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="primary-button"><i class="fa-solid fa-filter"></i> Filter</button>
+      {% if query or status_filter or mode_filter %}
+        <a href="{% url 'admin_internships' %}" class="secondary-button"><i class="fa-solid fa-rotate-left"></i> Reset</a>
+      {% endif %}
+    </form>
+    <div class="toolbar-count">
+      <span>Total: <strong>{{ total_count }}</strong></span>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <div>
+        <p class="panel-label">Talent Pipeline</p>
+        <h3>Internship Opportunities</h3>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Internship Title</th>
+            <th>Company</th>
+            <th>Location</th>
+            <th>Work Mode</th>
+            <th>Required Skills</th>
+            <th>Applicants</th>
+            <th>Status</th>
+            <th>Posted Date</th>
+            <th style="text-align: right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for internship in internships %}
+            <tr>
+              <td><strong>{{ internship.title }}</strong></td>
+              <td>
+                {% if internship.company %}
+                  <a href="{% url 'admin_company_detail' internship.company.id %}" class="table-link">{{ internship.company.name }}</a>
+                {% else %}
+                  <span class="muted-text">Independent</span>
+                {% endif %}
+              </td>
+              <td>{{ internship.location|default:'Remote' }}</td>
+              <td>{{ internship.get_work_mode_display }}</td>
+              <td>
+                {% if internship.get_all_skills %}
+                  <div class="skills-preview">
+                    {% for skill in internship.get_all_skills|slice:":3" %}
+                      <span class="skill-tag">{{ skill }}</span>
+                    {% endfor %}
+                    {% if internship.get_all_skills|length > 3 %}
+                      <span class="skill-tag more">+{{ internship.get_all_skills|length|add:"-3" }}</span>
+                    {% endif %}
+                  </div>
+                {% else %}
+                  <span class="muted-text">None</span>
+                {% endif %}
+              </td>
+              <td><strong>{{ internship.applications.count }}</strong></td>
+              <td>
+                {% if internship.status == 'active' %}
+                  <span class="badge badge-soft active"><i class="fa-solid fa-circle-check"></i> Active</span>
+                {% else %}
+                  <span class="badge badge-soft danger"><i class="fa-solid fa-circle-xmark"></i> {{ internship.get_status_display }}</span>
+                {% endif %}
+              </td>
+              <td>{{ internship.created_at|date:'d M Y' }}</td>
+              <td style="text-align: right;">
+                <div class="action-buttons">
+                  <a class="table-action" href="{% url 'job_detail' internship.id %}" target="_blank">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Inspect
+                  </a>
+                  <form method="post" action="{% url 'admin_toggle_job_status' internship.id %}" style="display:inline;" onsubmit="return confirm('Toggle status for {{ internship.title }}?');">
+                    {% csrf_token %}
+                    {% if internship.status == 'active' %}
+                      <button type="submit" class="table-action danger" title="Close Internship">
+                        <i class="fa-solid fa-lock"></i> Close
+                      </button>
+                    {% else %}
+                      <button type="submit" class="table-action success" title="Open Internship">
+                        <i class="fa-solid fa-lock-open"></i> Open
+                      </button>
+                    {% endif %}
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="9" class="empty-cell">
+                <div class="empty-state">
+                  <i class="fa-solid fa-graduation-cap"></i>
+                  <h4>No internships found</h4>
+                  <p>Try modifying your search query or filters.</p>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if page_obj.has_other_pages %}
+      <div class="pagination-bar">
+        <span class="pagination-info">Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        <div class="pagination-nav">
+          {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if mode_filter %}&mode={{ mode_filter }}{% endif %}" class="page-link">&laquo; Prev</a>
+          {% endif %}
+          <span class="page-current">{{ page_obj.number }}</span>
+          {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if mode_filter %}&mode={{ mode_filter }}{% endif %}" class="page-link">Next &raquo;</a>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}
+

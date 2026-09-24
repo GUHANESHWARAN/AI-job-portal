@@ -148,3 +148,4 @@ def analyze_skill_gap(
 def get_available_benchmark_roles() -> Dict[str, Dict[str, Any]]:
     """Returns the catalog of preset industry benchmark roles."""
     return BENCHMARK_ROLES
+

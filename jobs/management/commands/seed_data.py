@@ -395,3 +395,4 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS(f"Seeded {app_count} candidate applications with live AI match scores."))
         self.stdout.write(self.style.SUCCESS("All seed data created successfully!"))
+

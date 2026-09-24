@@ -159,3 +159,4 @@ def calculate_skill_similarity(candidate_skills: List[str], required_skills: Lis
 
     score = (len(matched) / len(req_map)) * 100.0 if req_map else 100.0
     return round(score, 1), matched, missing
+

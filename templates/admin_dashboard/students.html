@@ -1,0 +1,137 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block content %}
+  <section class="page-toolbar">
+    <form method="get" class="toolbar-form">
+      <div class="search-input-group">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="search" name="q" value="{{ query }}" placeholder="Search students by name, email, skills, or college" />
+      </div>
+      <div class="filter-group">
+        <select name="status" onchange="this.form.submit()">
+          <option value="">All Statuses</option>
+          <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active Only</option>
+          <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive Only</option>
+        </select>
+      </div>
+      <button type="submit" class="primary-button"><i class="fa-solid fa-filter"></i> Filter</button>
+      {% if query or status_filter %}
+        <a href="{% url 'admin_students' %}" class="secondary-button"><i class="fa-solid fa-rotate-left"></i> Reset</a>
+      {% endif %}
+    </form>
+    <div class="toolbar-count">
+      <span>Total: <strong>{{ total_count }}</strong></span>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <div>
+        <p class="panel-label">Talent Directory</p>
+        <h3>Student Accounts</h3>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Email</th>
+            <th>Education</th>
+            <th>Skills</th>
+            <th>Applications</th>
+            <th>Account Status</th>
+            <th>Joined Date</th>
+            <th style="text-align: right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for profile in students %}
+            <tr>
+              <td>
+                <div class="table-user">
+                  <span class="avatar small">{{ profile.user.first_name|first|default:'S' }}</span>
+                  <div>
+                    <strong>{{ profile.user.get_full_name|default:profile.user.username }}</strong>
+                    <small>{{ profile.degree|default:'Student' }}</small>
+                  </div>
+                </div>
+              </td>
+              <td>{{ profile.user.email }}</td>
+              <td>{{ profile.institution|default:'Not set' }}</td>
+              <td>
+                {% if profile.get_skills_list %}
+                  <div class="skills-preview">
+                    {% for skill in profile.get_skills_list|slice:":3" %}
+                      <span class="skill-tag">{{ skill }}</span>
+                    {% endfor %}
+                    {% if profile.get_skills_list|length > 3 %}
+                      <span class="skill-tag more">+{{ profile.get_skills_list|length|add:"-3" }}</span>
+                    {% endif %}
+                  </div>
+                {% else %}
+                  <span class="muted-text">None</span>
+                {% endif %}
+              </td>
+              <td><strong>{{ profile.user.applications.count }}</strong></td>
+              <td>
+                {% if profile.user.is_active %}
+                  <span class="badge badge-soft active"><i class="fa-solid fa-circle-check"></i> Active</span>
+                {% else %}
+                  <span class="badge badge-soft danger"><i class="fa-solid fa-circle-xmark"></i> Inactive</span>
+                {% endif %}
+              </td>
+              <td>{{ profile.user.date_joined|date:'d M Y' }}</td>
+              <td style="text-align: right;">
+                <div class="action-buttons">
+                  <a class="table-action" href="{% url 'admin_student_detail' profile.user_id %}">
+                    <i class="fa-solid fa-eye"></i> View
+                  </a>
+                  <form method="post" action="{% url 'admin_toggle_user_status' profile.user.id %}" style="display:inline;" onsubmit="return confirm('Are you sure you want to {% if profile.user.is_active %}deactivate{% else %}activate{% endif %} this student account?');">
+                    {% csrf_token %}
+                    {% if profile.user.is_active %}
+                      <button type="submit" class="table-action danger" title="Deactivate Account">
+                        <i class="fa-solid fa-user-slash"></i> Deactivate
+                      </button>
+                    {% else %}
+                      <button type="submit" class="table-action success" title="Activate Account">
+                        <i class="fa-solid fa-user-check"></i> Activate
+                      </button>
+                    {% endif %}
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="8" class="empty-cell">
+                <div class="empty-state">
+                  <i class="fa-solid fa-user-graduate"></i>
+                  <h4>No students found</h4>
+                  <p>Try adjusting your search query or status filter.</p>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if page_obj.has_other_pages %}
+      <div class="pagination-bar">
+        <span class="pagination-info">Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        <div class="pagination-nav">
+          {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="page-link">&laquo; Prev</a>
+          {% endif %}
+          <span class="page-current">{{ page_obj.number }}</span>
+          {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="page-link">Next &raquo;</a>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}
+
